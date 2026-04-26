@@ -897,7 +897,6 @@
         }
         document.getElementById('headerArea').style.display = 'block';
         
-        // --- 変更点: GAS APIをfetchで呼び出す ---
         callGasApi('getAppData', dateStr)
           .then(onDataReceived)
           .catch(err => {
@@ -1020,8 +1019,9 @@
           deleteBtnHtml = `<div style="margin-top:10px;"><button class="save-btn" style="width:100%; margin:0; background-color:#d9534f; box-shadow:0 6px 12px rgba(217,83,79,0.3);" onclick="deleteActionVoucher()">🗑️ 伝票を削除する</button></div>`;
         }
         
+        /* 修正：.action-formクラスを追加して、submitAction時に保存ボタンを捕捉・非活性化できるようにしました */
         let html = `
-          <div class="fancy-area">
+          <div class="fancy-area action-form">
             <div id="actionVoucherInfo" style="margin-bottom:15px; padding:12px; background:#fff; border:2px solid #007bff; border-radius:10px; display:flex; align-items:center; gap:15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                <div id="actionQrCode" style="width:80px; height:80px; background:#f8f9fa; display:flex; align-items:center; justify-content:center;"></div>
                <div>
@@ -1061,7 +1061,7 @@
                   </tr>
                 </thead>
                 <tbody id="actionItemsTbody">
-                  </tbody>
+                </tbody>
               </table>
             </div>
 
@@ -1134,7 +1134,6 @@
       }
 
       function handleActionScan(decodedText) {
-        // ★修正：伝票番号（YYYYMMDD-XXXX形式）を正確に判定して、一括受取のダイアログへ直行
         if (/^\d{8}-\d{4}$/.test(decodedText)) { 
           const staffName = document.getElementById('userSelect') ? document.getElementById('userSelect').value : '';
           if (!staffName) {
@@ -1149,20 +1148,18 @@
             }).then(msg => {
               if (document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
               alert(msg);
-              // フォームをリセットして再読み込み
               scannedActionItems = [];
               currentVoucherId = generateVoucherId();
               renderActionItems();
-              fetchDataForSelectedDate(); // 画面再読み込み
+              fetchDataForSelectedDate(); 
             }).catch(err => {
               if (document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
               alert('通信エラー: ' + err.message);
             });
           }
-          return; // ★重要：ここで処理を終了し、下の処理には進ませない
+          return; 
         }
 
-        // 数字のみの場合 (直前のアイテム数量を上書き)
         if (/^\d+$/.test(decodedText)) {
           if (scannedActionItems.length > 0) {
             const num = parseInt(decodedText, 10);
@@ -1175,7 +1172,6 @@
           return;
         }
 
-        // アイテムコードとみなす
         const masterItem = currentAppData.masterItems.find(i => i.code === decodedText);
         if (!masterItem) {
           alert(`未登録のアイテムコードです: ${decodedText}`);
@@ -1222,7 +1218,6 @@
         const btns = document.querySelectorAll('.action-form .save-btn');
         btns.forEach(b => b.disabled = true);
         
-        // --- 変更点: GAS APIをfetchで呼び出す ---
         callGasApi('saveActionData', payload)
           .then((msg) => {
             btns.forEach(b => b.disabled = false);
@@ -1270,7 +1265,7 @@
           facility: currentTab === 'opeAction' ? '手術室' : '中材',
           action: document.getElementById('actionTypeSelect').value || '',
           staff: document.getElementById('userSelect').value || '削除',
-          items: [] // 空配列を送ることでGAS側に既存データの打ち消し(削除)だけを実行させる
+          items: []
         };
 
         const btns = document.querySelectorAll('.save-btn');
@@ -1311,31 +1306,24 @@
       function editVoucherFromRecord(voucherId) {
         if (!voucherId) return;
         
-        // 当該伝票のデータを抽出
         const vItems = currentAppData.actionRecords.filter(r => r.voucherId === voucherId);
         if (vItems.length === 0) return;
 
         const firstRec = vItems[0];
-        
-        // 施設に応じてタブを切り替えてデータをセット
         const targetTab = firstRec.location === '手術室' ? 'opeAction' : 'chuzaiAction';
         
         if (confirm(`伝票 [${voucherId}] の内容を編集・再発行しますか？\n(アクションフォームへ読み込みます)`)) {
-          // まずタブを切り替える（ここでリストがリセットされる）
           switchTab(targetTab);
           
-          // その後にデータを流し込む
           scannedActionItems = vItems.map(v => ({
             code: v.itemCode,
             name: v.itemName,
             qty: v.qty || 1
           }));
-          currentVoucherId = voucherId; // 既存のIDを継承
+          currentVoucherId = voucherId;
           
-          // 再描画
           renderCurrentTab();
           
-          // アクションの種類も復元
           const actionSelect = document.getElementById('actionTypeSelect');
           if (actionSelect) actionSelect.value = firstRec.action;
         }
@@ -2034,7 +2022,6 @@
         }
         btn.disabled = true; btn.innerText = '保存中...';
 
-        // --- 変更点: GAS APIをfetchで呼び出す ---
         if (currentTab === 'itemMaster') {
           callGasApi('saveItemMasterData', {
             isNew: selectedItemIndex === -1,
