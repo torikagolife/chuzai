@@ -998,7 +998,7 @@
       }
 
       /* ==============================================================
-          アクションフォーム用ロジック
+         アクションフォーム用ロジック
       ============================================================== */
       function generateVoucherId() {
         const today = new Date();
@@ -1127,6 +1127,30 @@
       }
 
       function handleActionScan(decodedText) {
+        // ★追加：読み取ったデータが12桁の数字（伝票番号）だった場合の処理
+        if (/^\d{12}$/.test(decodedText)) { 
+          const staffName = document.getElementById('userSelect') ? document.getElementById('userSelect').value : '';
+          if (!staffName) {
+            alert('担当者を選択してから伝票を読み込んでください！');
+            return;
+          }
+          if (confirm('伝票 ' + decodedText + ' のアイテムを一括受取して、ｸﾘｰﾝ待ちへ移動させますか？')) {
+            if (document.getElementById('loading')) document.getElementById('loading').style.display = 'block'; 
+            callGasApi('receiveVoucherData', {
+              voucherId: decodedText,
+              staff: staffName
+            }).then(msg => {
+              if (document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
+              alert(msg);
+              fetchDataForSelectedDate(); // 画面再読み込み
+            }).catch(err => {
+              if (document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
+              alert('通信エラー: ' + err.message);
+            });
+          }
+          return; // ★重要：ここで処理を終了し、アイテム検索には進ませない
+        }
+
         // 数字のみの場合 (直前のアイテム数量を上書き)
         if (/^\d+$/.test(decodedText)) {
           if (scannedActionItems.length > 0) {
@@ -1258,7 +1282,7 @@
       }
 
       /* ==============================================================
-          アクション記録の編集機能
+         アクション記録の編集機能
       ============================================================== */
       function editVoucherFromRecord(voucherId) {
         if (!voucherId) return;
@@ -1294,7 +1318,7 @@
       }
 
       /* ==============================================================
-          既存の描画ロジック
+         既存の描画ロジック
       ============================================================== */
       function renderActionRecordTab(container) {
         if (!currentAppData || !currentAppData.actionRecords) {
