@@ -1127,14 +1127,14 @@
       }
 
       function handleActionScan(decodedText) {
-        // ★追加：読み取ったデータが12桁の数字（伝票番号）だった場合の処理
-        if (/^\d{12}$/.test(decodedText)) { 
+        // ★修正：伝票番号（YYYYMMDD-XXXX形式）を正確に判定して、一括受取のダイアログへ直行
+        if (/^\d{8}-\d{4}$/.test(decodedText)) { 
           const staffName = document.getElementById('userSelect') ? document.getElementById('userSelect').value : '';
           if (!staffName) {
             alert('担当者を選択してから伝票を読み込んでください！');
             return;
           }
-          if (confirm('伝票 ' + decodedText + ' のアイテムを一括受取して、ｸﾘｰﾝ待ちへ移動させますか？')) {
+          if (confirm('伝票 ' + decodedText + ' のアイテムを一括受取して、次に移動させますか？\n（ｽﾃｰﾀｽ変化は伝票ごとに違います）')) {
             if (document.getElementById('loading')) document.getElementById('loading').style.display = 'block'; 
             callGasApi('receiveVoucherData', {
               voucherId: decodedText,
@@ -1142,13 +1142,17 @@
             }).then(msg => {
               if (document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
               alert(msg);
+              // フォームをリセットして再読み込み
+              scannedActionItems = [];
+              currentVoucherId = generateVoucherId();
+              renderActionItems();
               fetchDataForSelectedDate(); // 画面再読み込み
             }).catch(err => {
               if (document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
               alert('通信エラー: ' + err.message);
             });
           }
-          return; // ★重要：ここで処理を終了し、アイテム検索には進ませない
+          return; // ★重要：ここで処理を終了し、下の処理には進ませない
         }
 
         // 数字のみの場合 (直前のアイテム数量を上書き)
@@ -1160,25 +1164,6 @@
             console.log("数量を " + num + " に変更しました。");
           } else {
             alert("アイテムがリストにありません。先にアイテムをスキャンしてください。");
-          }
-          return;
-        }
-
-        // 伝票番号の場合 (例: 20260424-1234) -> 一括受取シミュレーション
-        if (decodedText.length >= 10 && /^\d{8}-/.test(decodedText)) {
-          if (currentAppData.actionRecords) {
-            const vItems = currentAppData.actionRecords.filter(r => r.voucherId === decodedText);
-            if (vItems.length > 0) {
-              scannedActionItems = vItems.map(v => ({
-                code: v.itemCode,
-                name: v.itemName,
-                qty: v.qty || 1
-              }));
-              renderActionItems();
-              alert(`伝票 [${decodedText}] の内容を読み込みました！受取保存を行ってください。`);
-            } else {
-              alert(`伝票データ [${decodedText}] が見つかりませんでした。`);
-            }
           }
           return;
         }
