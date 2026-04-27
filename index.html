@@ -32,7 +32,7 @@
       
       .main-logo { max-height: 100px; vertical-align: middle; }
 
-      #printHeaderInfo { display: none; } /* デフォルトは非表示*/
+      #printHeaderInfo { display: none; } /* デフォルトは非表示 */
 
       .tabs {
         display: flex;
@@ -69,6 +69,17 @@
         height: 3px;
         background-color: #007bff;
         border-radius: 3px;
+      }
+
+      /* 絵文字ペアとテキストのレイアウト制御用 */
+      .emoji-pair {
+        display: inline-block;
+        letter-spacing: -2px; /* 2つの絵文字を少し近づけて1体感を出す */
+        margin-right: 4px;
+        vertical-align: middle;
+      }
+      .tab-text {
+        vertical-align: middle;
       }
 
       /* 隠しマスタタブの表示制御用 */
@@ -483,6 +494,11 @@
         h2 { text-align: left; margin: 0 0 10px 0; } 
         .header-area { padding: 10px; margin-bottom: 15px; } 
         .tabs { margin-bottom: 10px; } 
+
+        /* スマホ時のみテキスト非表示、絵文字を少し大きく */
+        .tab-text { display: none; }
+        .emoji-pair { margin-right: 0; font-size: 1.4em; letter-spacing: -3px; }
+        .tab-btn { min-width: 60px; padding: 12px 5px; }
         
         .filter-group label { display: none; } 
         .filters-flex { 
@@ -655,20 +671,20 @@
       <div id="printHeaderInfo"></div>
       
       <div class="tabs">
-        <button id="tabDaily" class="tab-btn active" onclick="switchTab('daily')">📅 日別ﾁｪｯｸ</button>
-        <button id="tabSurgery" class="tab-btn" onclick="switchTab('surgery')">🏥 手術別ﾁｪｯｸ</button>
-        <button id="tabSchedule" class="tab-btn" onclick="switchTab('schedule')">🗓️ 手術ｽｹｼﾞｭｰﾙ</button>
-        <button id="tabResult" class="tab-btn" onclick="switchTab('result')">📊 日別結果</button>
-        <button id="tabItemStatus" class="tab-btn" onclick="switchTab('itemStatus')">📦 ｱｲﾃﾑｽﾃｰﾀｽ</button>
-        <button id="tabActionRecord" class="tab-btn" onclick="switchTab('actionRecord')">📜 ｱｸｼｮﾝ記録</button>
+        <button id="tabDaily" class="tab-btn active" onclick="switchTab('daily')"><span class="emoji-pair">📅✅</span><span class="tab-text"> 日別ﾁｪｯｸ</span></button>
+        <button id="tabSurgery" class="tab-btn" onclick="switchTab('surgery')"><span class="emoji-pair">🔩✅</span><span class="tab-text"> 手術別ﾁｪｯｸ</span></button>
+        <button id="tabSchedule" class="tab-btn" onclick="switchTab('schedule')"><span class="emoji-pair">🗓️⏰</span><span class="tab-text"> 手術ｽｹｼﾞｭｰﾙ</span></button>
+        <button id="tabResult" class="tab-btn" onclick="switchTab('result')"><span class="emoji-pair">📅📊</span><span class="tab-text"> 日別結果</span></button>
+        <button id="tabItemStatus" class="tab-btn" onclick="switchTab('itemStatus')"><span class="emoji-pair">📦🔍</span><span class="tab-text"> ｱｲﾃﾑｽﾃｰﾀｽ</span></button>
+        <button id="tabActionRecord" class="tab-btn" onclick="switchTab('actionRecord')"><span class="emoji-pair">🔄✍️</span><span class="tab-text"> ｱｸｼｮﾝ記録</span></button>
         
-        <button id="tabOpeAction" class="tab-btn" onclick="switchTab('opeAction')" style="color:#d9534f;">🏥 手術室ｱｸｼｮﾝ</button>
-        <button id="tabChuzaiAction" class="tab-btn" onclick="switchTab('chuzaiAction')" style="color:#17a2b8;">🧼 中材ｱｸｼｮﾝ</button>
+        <button id="tabOpeAction" class="tab-btn" onclick="switchTab('opeAction')" style="color:#d9534f;"><span class="emoji-pair">🔩🔄</span><span class="tab-text"> 手術室ｱｸｼｮﾝ</span></button>
+        <button id="tabChuzaiAction" class="tab-btn" onclick="switchTab('chuzaiAction')" style="color:#17a2b8;"><span class="emoji-pair">♨️🔄</span><span class="tab-text"> 中材ｱｸｼｮﾝ</span></button>
 
-        <button id="tabMaster" class="tab-btn master-tab" onclick="switchTab('master')">📚 手術ﾏｽﾀ</button>
-        <button id="tabItemMaster" class="tab-btn master-tab" onclick="switchTab('itemMaster')">🧰 ｱｲﾃﾑﾏｽﾀ</button>
-        <button id="tabLocationMaster" class="tab-btn master-tab" onclick="switchTab('locationMaster')">📍 場所ﾏｽﾀ</button>
-        <button id="tabStaffMaster" class="tab-btn master-tab" onclick="switchTab('staffMaster')">👤 ｽﾀｯﾌﾏｽﾀ</button>
+        <button id="tabMaster" class="tab-btn master-tab" onclick="switchTab('master')"><span class="emoji-pair">📚</span><span class="tab-text"> 手術ﾏｽﾀ</span></button>
+        <button id="tabItemMaster" class="tab-btn master-tab" onclick="switchTab('itemMaster')"><span class="emoji-pair">🧰</span><span class="tab-text"> ｱｲﾃﾑﾏｽﾀ</span></button>
+        <button id="tabLocationMaster" class="tab-btn master-tab" onclick="switchTab('locationMaster')"><span class="emoji-pair">📍</span><span class="tab-text"> 場所ﾏｽﾀ</span></button>
+        <button id="tabStaffMaster" class="tab-btn master-tab" onclick="switchTab('staffMaster')"><span class="emoji-pair">👤</span><span class="tab-text"> ｽﾀｯﾌﾏｽﾀ</span></button>
       </div>
 
       <div id="standardFilters">
