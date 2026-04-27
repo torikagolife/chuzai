@@ -1359,7 +1359,7 @@
                       </thead>
                       <tbody>`;
 
-        currentAppData.actionRecords.slice().reverse().forEach(rec => {
+        currentAppData.actionRecords.forEach(rec => {
           const statusStyle = rec.status === '移動中' ? 'color:#d9534f; font-weight:bold;' : 'color:#28a745; font-weight:bold;';
           html += `<tr>
                     <td><button onclick="editVoucherFromRecord('${rec.voucherId}')" style="padding:4px 8px; font-size:0.8em; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">編集</button></td>
