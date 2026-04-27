@@ -36,55 +36,66 @@
 
       .tabs {
         display: flex;
+        flex-direction: column;
+        gap: 8px;
         margin-bottom: 15px;
-        border-bottom: 2px solid #e0e0e0;
+      }
+      .tabs-row {
+        display: flex;
+        width: 100%;
+        gap: 6px;
         overflow-x: auto;
         white-space: nowrap;
         scrollbar-width: none;
       }
-      .tabs::-webkit-scrollbar { display: none; }
+      .tabs-row::-webkit-scrollbar { display: none; }
       
       .tab-btn {
         flex: 1;
-        padding: 14px 10px;
-        font-size: 1em;
+        padding: 10px 4px;
+        font-size: 0.95em;
         font-weight: bold;
-        border: none;
-        background-color: transparent;
+        border: 2px solid #e0e0e0;
+        background-color: #fff;
         color: #888;
         cursor: pointer;
         transition: all 0.3s;
-        min-width: 90px;
-        position: relative;
+        min-width: 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .tab-btn.active {
         color: #007bff;
-      }
-      .tab-btn.active::after {
-        content: "";
-        position: absolute;
-        bottom: -2px;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background-color: #007bff;
-        border-radius: 3px;
+        border-color: #007bff;
+        background-color: #f0f7ff;
       }
 
       /* 絵文字ペアとテキストのレイアウト制御用 */
       .emoji-pair {
         display: inline-block;
         letter-spacing: -2px; /* 2つの絵文字を少し近づけて1体感を出す */
-        margin-right: 4px;
+        margin-right: 6px;
         vertical-align: middle;
+        background-color: #f8f9fa;
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      }
+      .tab-btn.active .emoji-pair {
+        background-color: #fff;
+        border-color: #b8daff;
       }
       .tab-text {
         vertical-align: middle;
       }
 
       /* 隠しマスタタブの表示制御用 */
-      .master-tab { display: none; }
-      .master-tab.show { display: inline-block; }
+      .master-tab { display: none !important; }
+      .master-tab.show { display: flex !important; }
 
       /* フィルターエリア（横並び・大型化） */
       .filters-flex {
@@ -488,17 +499,19 @@
       }
 
       @media (max-width: 768px) {
-        .main-logo { max-height: 50px; }
+        .main-logo { max-height: 35px; } /* スマホ用ロゴサイズ縮小 */
         .master-layout { grid-template-columns: 1fr; height: auto; }
         .master-sidebar { height: 300px; margin-bottom: 15px; }
         h2 { text-align: left; margin: 0 0 10px 0; } 
         .header-area { padding: 10px; margin-bottom: 15px; } 
-        .tabs { margin-bottom: 10px; } 
+        
+        .tabs { margin-bottom: 10px; gap: 6px; } 
+        .tabs-row { gap: 4px; }
 
         /* スマホ時のみテキスト非表示、絵文字を少し大きく */
         .tab-text { display: none; }
-        .emoji-pair { margin-right: 0; font-size: 1.4em; letter-spacing: -3px; }
-        .tab-btn { min-width: 60px; padding: 12px 5px; }
+        .emoji-pair { margin-right: 0; font-size: 1.4em; letter-spacing: -3px; padding: 6px 8px; }
+        .tab-btn { min-width: 0; padding: 8px 2px; }
         
         .filter-group label { display: none; } 
         .filters-flex { 
@@ -671,20 +684,23 @@
       <div id="printHeaderInfo"></div>
       
       <div class="tabs">
-        <button id="tabDaily" class="tab-btn active" onclick="switchTab('daily')"><span class="emoji-pair">📅✅</span><span class="tab-text"> 日別ﾁｪｯｸ</span></button>
-        <button id="tabSurgery" class="tab-btn" onclick="switchTab('surgery')"><span class="emoji-pair">🔩✅</span><span class="tab-text"> 手術別ﾁｪｯｸ</span></button>
-        <button id="tabSchedule" class="tab-btn" onclick="switchTab('schedule')"><span class="emoji-pair">🗓️⏰</span><span class="tab-text"> 手術ｽｹｼﾞｭｰﾙ</span></button>
-        <button id="tabResult" class="tab-btn" onclick="switchTab('result')"><span class="emoji-pair">📅📊</span><span class="tab-text"> 日別結果</span></button>
-        <button id="tabItemStatus" class="tab-btn" onclick="switchTab('itemStatus')"><span class="emoji-pair">📦🔍</span><span class="tab-text"> ｱｲﾃﾑｽﾃｰﾀｽ</span></button>
-        <button id="tabActionRecord" class="tab-btn" onclick="switchTab('actionRecord')"><span class="emoji-pair">🔄✍️</span><span class="tab-text"> ｱｸｼｮﾝ記録</span></button>
-        
-        <button id="tabOpeAction" class="tab-btn" onclick="switchTab('opeAction')" style="color:#d9534f;"><span class="emoji-pair">🔩🔄</span><span class="tab-text"> 手術室ｱｸｼｮﾝ</span></button>
-        <button id="tabChuzaiAction" class="tab-btn" onclick="switchTab('chuzaiAction')" style="color:#17a2b8;"><span class="emoji-pair">♨️🔄</span><span class="tab-text"> 中材ｱｸｼｮﾝ</span></button>
+        <div class="tabs-row">
+          <button id="tabDaily" class="tab-btn active" onclick="switchTab('daily')"><span class="emoji-pair">📅✅</span><span class="tab-text"> 日別ﾁｪｯｸ</span></button>
+          <button id="tabSurgery" class="tab-btn" onclick="switchTab('surgery')"><span class="emoji-pair">🔩✅</span><span class="tab-text"> 手術別ﾁｪｯｸ</span></button>
+          <button id="tabSchedule" class="tab-btn" onclick="switchTab('schedule')"><span class="emoji-pair">🗓️⏰</span><span class="tab-text"> 手術ｽｹｼﾞｭｰﾙ</span></button>
+          <button id="tabResult" class="tab-btn" onclick="switchTab('result')"><span class="emoji-pair">📅📊</span><span class="tab-text"> 日別結果</span></button>
+          <button id="tabItemStatus" class="tab-btn" onclick="switchTab('itemStatus')"><span class="emoji-pair">📦🔍</span><span class="tab-text"> ｱｲﾃﾑｽﾃｰﾀｽ</span></button>
+        </div>
+        <div class="tabs-row">
+          <button id="tabActionRecord" class="tab-btn" onclick="switchTab('actionRecord')"><span class="emoji-pair">📜✍️</span><span class="tab-text"> ｱｸｼｮﾝ記録</span></button>
+          <button id="tabOpeAction" class="tab-btn" onclick="switchTab('opeAction')" style="color:#d9534f;"><span class="emoji-pair">🏥🔄</span><span class="tab-text"> 手術室ｱｸｼｮﾝ</span></button>
+          <button id="tabChuzaiAction" class="tab-btn" onclick="switchTab('chuzaiAction')" style="color:#17a2b8;"><span class="emoji-pair">🧼🔄</span><span class="tab-text"> 中材ｱｸｼｮﾝ</span></button>
 
-        <button id="tabMaster" class="tab-btn master-tab" onclick="switchTab('master')"><span class="emoji-pair">📚</span><span class="tab-text"> 手術ﾏｽﾀ</span></button>
-        <button id="tabItemMaster" class="tab-btn master-tab" onclick="switchTab('itemMaster')"><span class="emoji-pair">🧰</span><span class="tab-text"> ｱｲﾃﾑﾏｽﾀ</span></button>
-        <button id="tabLocationMaster" class="tab-btn master-tab" onclick="switchTab('locationMaster')"><span class="emoji-pair">📍</span><span class="tab-text"> 場所ﾏｽﾀ</span></button>
-        <button id="tabStaffMaster" class="tab-btn master-tab" onclick="switchTab('staffMaster')"><span class="emoji-pair">👤</span><span class="tab-text"> ｽﾀｯﾌﾏｽﾀ</span></button>
+          <button id="tabMaster" class="tab-btn master-tab" onclick="switchTab('master')"><span class="emoji-pair">📚⚙️</span><span class="tab-text"> 手術ﾏｽﾀ</span></button>
+          <button id="tabItemMaster" class="tab-btn master-tab" onclick="switchTab('itemMaster')"><span class="emoji-pair">🧰⚙️</span><span class="tab-text"> ｱｲﾃﾑﾏｽﾀ</span></button>
+          <button id="tabLocationMaster" class="tab-btn master-tab" onclick="switchTab('locationMaster')"><span class="emoji-pair">📍⚙️</span><span class="tab-text"> 場所ﾏｽﾀ</span></button>
+          <button id="tabStaffMaster" class="tab-btn master-tab" onclick="switchTab('staffMaster')"><span class="emoji-pair">👤⚙️</span><span class="tab-text"> ｽﾀｯﾌﾏｽﾀ</span></button>
+        </div>
       </div>
 
       <div id="standardFilters">
@@ -976,22 +992,22 @@
 
         if (currentTab === 'master') {
           renderMasterTab(container);
-          saveBtn.innerText = selectedMasterIndex === -1 ? '新しい手術を登録する' : '手術マスタを保存する';
+          saveBtn.innerText = selectedMasterIndex === -1 ? '新しい手術を登録' : '手術マスタを保存';
         } else if (currentTab === 'itemMaster') {
           renderItemMasterTab(container);
-          saveBtn.innerText = selectedItemIndex === -1 ? '新しいアイテムを登録する' : 'アイテムマスタを保存する';
+          saveBtn.innerText = selectedItemIndex === -1 ? '新しいアイテムを登録' : 'アイテムマスタを保存';
         } else if (currentTab === 'locationMaster') {
           renderLocationMasterTab(container);
-          saveBtn.innerText = selectedLocationIndex === -1 ? '新しい場所を登録する' : '場所マスタを保存する';
+          saveBtn.innerText = selectedLocationIndex === -1 ? '新しい場所を登録' : '場所マスタを保存';
         } else if (currentTab === 'staffMaster') {
           renderStaffMasterTab(container);
-          saveBtn.innerText = selectedStaffIndex === -1 ? '新しいスタッフを登録する' : 'スタッフマスタを保存する';
+          saveBtn.innerText = selectedStaffIndex === -1 ? '新しいスタッフを登録' : 'スタッフマスタを保存';
         } else if (currentTab === 'schedule') {
           renderScheduleTab(container);
-          saveBtn.innerText = 'スケジュールを保存する';
+          saveBtn.innerText = 'スケジュールを保存';
         } else if (currentTab === 'result') {
           renderResultTab(container);
-          saveBtn.innerText = '事前メモを保存する';
+          saveBtn.innerText = '事前メモを保存';
         } else if (currentTab === 'itemStatus') {
           renderItemStatusTab(container);
           saveBtn.style.display = 'none';
@@ -1008,7 +1024,7 @@
           setTimeout(() => renderQrCode('actionQrCode', currentVoucherId), 50);
         } else {
           renderChecklistTab(container);
-          saveBtn.innerText = '結果を保存する';
+          saveBtn.innerText = '結果を保存';
         }
       }
 
@@ -1699,7 +1715,7 @@
       }
 
       function deleteScheduleRow(btn) {
-        if (confirm('この手術スケジュール行を削除しますか？\n※「保存する」ボタンを押すまで確定しません。')) {
+        if (confirm('この手術スケジュール行を削除しますか？\n※「保存」ボタンを押すまで確定しません。')) {
           btn.closest('tr').remove();
           markAsChanged(); 
         }
@@ -2025,7 +2041,7 @@
       function onSaveError(err) {
         const btn = document.getElementById('saveBtn');
         btn.disabled = false;
-        btn.innerText = '保存する';
+        btn.innerText = '保存';
         alert('保存中にエラーが発生しました: ' + err.message);
       }
 
