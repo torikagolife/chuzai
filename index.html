@@ -36,19 +36,18 @@
 
       .tabs {
         display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 15px;
-      }
-      .tabs-row {
-        display: flex;
-        width: 100%;
+        flex-direction: row;
         gap: 6px;
+        margin-bottom: 15px;
         overflow-x: auto;
         white-space: nowrap;
         scrollbar-width: none;
       }
-      .tabs-row::-webkit-scrollbar { display: none; }
+      .tabs::-webkit-scrollbar { display: none; }
+      
+      .tabs-row {
+        display: contents;
+      }
       
       .tab-btn {
         flex: 1;
@@ -505,8 +504,22 @@
         h2 { text-align: left; margin: 0 0 10px 0; } 
         .header-area { padding: 10px; margin-bottom: 15px; } 
         
-        .tabs { margin-bottom: 10px; gap: 6px; } 
-        .tabs-row { gap: 4px; }
+        .tabs { 
+          flex-direction: column;
+          margin-bottom: 10px; 
+          gap: 6px; 
+          overflow-x: visible;
+          white-space: normal;
+        } 
+        .tabs-row { 
+          display: flex;
+          width: 100%;
+          gap: 4px;
+          overflow-x: auto;
+          white-space: nowrap;
+          scrollbar-width: none;
+        }
+        .tabs-row::-webkit-scrollbar { display: none; }
 
         /* スマホ時のみテキスト非表示、絵文字を少し大きく */
         .tab-text { display: none; }
