@@ -32,7 +32,7 @@
       
       .main-logo { max-height: 80px; vertical-align: middle; }
 
-      #printHeaderInfo { display: none; } /* デフォルトは非表示　　 */
+      #printHeaderInfo { display: none; } /* デフォルトは非表示　 */
 
       .tabs {
         display: flex;
@@ -874,7 +874,9 @@
       let currentVoucherId = '';
       
       let currentDeployedSurgeries = [];
-      let submittedSurgeryIndices = [];
+      let submittedChuzaiIndices = [];
+      let submittedDispoIndices = [];
+      let currentDeployType = '';
       let lastFetchedDate = '';
 
       window.onload = function() {
@@ -958,10 +960,12 @@
 
       function fetchDataForDate(dateStr) {
         if (lastFetchedDate !== dateStr) {
-          submittedSurgeryIndices = [];
+          submittedChuzaiIndices = [];
+          submittedDispoIndices = [];
           lastFetchedDate = dateStr;
         }
         currentDeployedSurgeries = [];
+        currentDeployType = '';
 
         if (!isRestoringState) {
           document.getElementById('checklist').innerHTML = '';
@@ -1168,10 +1172,12 @@
               <div style="display:flex; gap:10px;">
                 <div id="actionSurgeryCheckboxes" style="flex:1; padding:5px; border-radius:6px; border:1px solid #b8daff; background-color:#fff; font-size:1em; height:120px; overflow-y:auto; display:flex; flex-direction:column; gap:5px;">
                   ${(currentAppData && currentAppData.surgeries) ? currentAppData.surgeries.map((s, i) => {
-                    const isSubmitted = submittedSurgeryIndices.includes(i);
-                    const colorStyle = isSubmitted ? 'color:#999; background-color:#f0f0f0;' : '';
-                    const textSuffix = isSubmitted ? ' (送信済)' : '';
-                    return `<label style="padding:4px; margin:0; border-radius:4px; display:flex; align-items:center; gap:5px; cursor:pointer; ${colorStyle}"><input type="checkbox" value="${i}" class="surgery-checkbox"> [${s.order}] ${s.name}${textSuffix}</label>`;
+                    const isChuzaiSubmitted = submittedChuzaiIndices.includes(i);
+                    const isDispoSubmitted = submittedDispoIndices.includes(i);
+                    let badges = '';
+                    if (isChuzaiSubmitted) badges += ' <span style="font-size:0.8em; background:#17a2b8; color:white; padding:2px 4px; border-radius:4px; margin-left:4px;">🀄️済</span>';
+                    if (isDispoSubmitted) badges += ' <span style="font-size:0.8em; background:#6c757d; color:white; padding:2px 4px; border-radius:4px; margin-left:4px;">🗑️済</span>';
+                    return `<label style="padding:4px; margin:0; border-radius:4px; display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" value="${i}" class="surgery-checkbox"> [${s.order}] ${s.name}${badges}</label>`;
                   }).join('') : ''}
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px; width:140px;">
@@ -1242,6 +1248,7 @@
 
         scannedActionItems = [];
         currentDeployedSurgeries = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
+        currentDeployType = deployType;
 
         currentDeployedSurgeries.forEach(sIdx => {
           const surgery = currentAppData.surgeries[sIdx];
@@ -1469,13 +1476,16 @@
           .then((msg) => {
             btns.forEach(b => b.disabled = false);
             
-            // 送信完了した手術を記録してグレーアウトに反映させる
+            // 送信完了した手術を記録してバッジに反映させる
             currentDeployedSurgeries.forEach(idx => {
-              if (!submittedSurgeryIndices.includes(idx)) {
-                submittedSurgeryIndices.push(idx);
+              if (currentDeployType === 'chuzai' && !submittedChuzaiIndices.includes(idx)) {
+                submittedChuzaiIndices.push(idx);
+              } else if (currentDeployType === 'dispo' && !submittedDispoIndices.includes(idx)) {
+                submittedDispoIndices.push(idx);
               }
             });
             currentDeployedSurgeries = [];
+            currentDeployType = '';
 
             if (doPrint) {
               document.getElementById('vPrintDate').innerText = date;
