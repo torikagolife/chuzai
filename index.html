@@ -1071,6 +1071,63 @@
         return `${yyyy}${mm}${dd}-${random4}`;
       }
 
+      // ★追加：アクションとアイテムコードから在庫上限を取得する関数
+      function getMaxQty(itemCode, actionName) {
+        if (!currentAppData || !currentAppData.masterItems) return 9999;
+        const item = currentAppData.masterItems.find(i => i.code === itemCode);
+        if (!item) return 9999;
+
+        switch(actionName) {
+          case '中材へ戻し':
+          case 'ディスポ消費':
+          case '廃棄（手術室）':
+            return parseInt(item.opeCount, 10) || 0;
+          case '手術室へ払出':
+          case '廃棄（中材）':
+          case '外注滅菌出し':
+          case '修理出し':
+            return parseInt(item.chuzaiCount, 10) || 0;
+          case '手術室受取り':
+          case '中材受取り':
+            return parseInt(item.moving, 10) || 0;
+          case '洗浄完了':
+          case '滅菌完了':
+          case '外注滅菌戻り':
+            return parseInt(item.cleanWait, 10) || 0;
+          case '修理戻り':
+            return parseInt(item.repairing, 10) || 0;
+          case '新規・補充':
+          case '棚卸し調整':
+          default:
+            return 9999;
+        }
+      }
+
+      // ★追加：アクション種別が途中で変更された場合の在庫再チェック関数
+      function handleActionTypeChange() {
+        const actionType = document.getElementById('actionTypeSelect').value;
+        let modified = false;
+        let dropped = false;
+        
+        for (let i = scannedActionItems.length - 1; i >= 0; i--) {
+          const item = scannedActionItems[i];
+          const maxLimit = getMaxQty(item.code, actionType);
+          
+          if (actionType !== '新規・補充' && actionType !== '棚卸し調整' && maxLimit < 1) {
+            scannedActionItems.splice(i, 1);
+            dropped = true;
+          } else if (item.qty > maxLimit) {
+            item.qty = maxLimit;
+            modified = true;
+          }
+        }
+        
+        if (dropped || modified) {
+          alert("アクションが変更されたため、在庫上限に合わせてアイテムの数量調整またはリストからの除外を行いました。");
+          renderActionItems();
+        }
+      }
+
       function renderActionForm(container, facility) {
         const actions = facility === '手術室' 
           ? ['中材へ戻し', 'ディスポ消費', '廃棄（手術室）', '手術室受取り']
@@ -1082,7 +1139,7 @@
           deleteBtnHtml = `<div style="margin-top:10px;"><button class="save-btn" style="width:100%; margin:0; background-color:#d9534f; box-shadow:0 6px 12px rgba(217,83,79,0.3);" onclick="deleteActionVoucher()">🗑️ 伝票を削除する</button></div>`;
         }
         
-        /* 修正：.action-formクラスを追加して、submitAction時に保存ボタンを捕捉・非活性化できるようにしました */
+        // ★修正: select に onchange="handleActionTypeChange()" を追加
         let html = `
           <div class="fancy-area action-form">
             <div id="actionVoucherInfo" style="margin-bottom:15px; padding:12px; background:#fff; border:2px solid #007bff; border-radius:10px; display:flex; align-items:center; gap:15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
@@ -1096,7 +1153,7 @@
 
             <div class="record-area">
               <label>🛠️ アクションを選択してください</label>
-              <select id="actionTypeSelect" style="width:100%;">
+              <select id="actionTypeSelect" style="width:100%;" onchange="handleActionTypeChange()">
                 ${actions.map(a => `<option value="${a}">${a}</option>`).join('')}
               </select>
             </div>
@@ -1172,7 +1229,16 @@
         const actionType = document.getElementById('actionTypeSelect') ? document.getElementById('actionTypeSelect').value : '';
         
         if (isNaN(val)) val = 1;
-        if (actionType !== '棚卸し調整' && val < 1) val = 1; // ★棚卸し調整以外は1未満を1にする
+        if (actionType !== '棚卸し調整' && val < 1) val = 1; // 棚卸し調整以外は1未満を1にする
+
+        // ★上限チェックを追加
+        const itemCode = scannedActionItems[index].code;
+        const maxLimit = getMaxQty(itemCode, actionType);
+
+        if (actionType !== '新規・補充' && actionType !== '棚卸し調整' && val > maxLimit) {
+          alert(`在庫数（${maxLimit}）を超えています！`);
+          val = maxLimit;
+        }
         
         scannedActionItems[index].qty = val;
         input.value = val;
@@ -1227,11 +1293,19 @@
           return; 
         }
 
-        if (/^-?\d+$/.test(decodedText)) { // ★マイナスも許可
+        if (/^-?\d+$/.test(decodedText)) { // マイナスも許可
           if (scannedActionItems.length > 0) {
             let num = parseInt(decodedText, 10);
             const actionType = document.getElementById('actionTypeSelect') ? document.getElementById('actionTypeSelect').value : '';
-            if (actionType !== '棚卸し調整' && num < 1) num = 1; // ★棚卸し調整以外は1未満を1にする
+            if (actionType !== '棚卸し調整' && num < 1) num = 1;
+
+            // ★上限チェックを追加
+            const itemCode = scannedActionItems[scannedActionItems.length - 1].code;
+            const maxLimit = getMaxQty(itemCode, actionType);
+            if (actionType !== '新規・補充' && actionType !== '棚卸し調整' && num > maxLimit) {
+               alert(`在庫数（${maxLimit}）を超えているため、上限値に調整しました。`);
+               num = maxLimit;
+            }
 
             scannedActionItems[scannedActionItems.length - 1].qty = num;
             renderActionItems();
@@ -1248,10 +1322,23 @@
           return;
         }
 
+        const actionType = document.getElementById('actionTypeSelect') ? document.getElementById('actionTypeSelect').value : '';
+        const maxLimit = getMaxQty(masterItem.code, actionType);
+
         const existingItem = scannedActionItems.find(i => i.code === decodedText);
         if (existingItem) {
-          existingItem.qty += 1;
+          // ★上限チェック
+          if (actionType !== '新規・補充' && actionType !== '棚卸し調整' && existingItem.qty + 1 > maxLimit) {
+            alert(`在庫数（${maxLimit}）を超えています！これ以上追加できません。`);
+          } else {
+            existingItem.qty += 1;
+          }
         } else {
+          // ★新規追加時の上限チェック (在庫0なら弾く)
+          if (actionType !== '新規・補充' && actionType !== '棚卸し調整' && maxLimit < 1) {
+             alert(`このアイテムは対象の在庫が0です！`);
+             return;
+          }
           scannedActionItems.push({
             code: masterItem.code,
             name: masterItem.name,
@@ -1589,9 +1676,9 @@
         } else {
           const s = currentAppData.masterSurgeries[selectedMasterIndex];
           html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                     <h3 style="margin:0;">[${s.code}] ${s.name}</h3>
-                     <button onclick="copyMaster()" style="padding:8px 15px; background-color:#17a2b8; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9em; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition:0.2s;">📄 コピーして新規作成</button>
-                   </div>`;
+                      <h3 style="margin:0;">[${s.code}] ${s.name}</h3>
+                      <button onclick="copyMaster()" style="padding:8px 15px; background-color:#17a2b8; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.9em; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition:0.2s;">📄 コピーして新規作成</button>
+                    </div>`;
           
           if (s.code) {
             html += `<div class="qr-container">
