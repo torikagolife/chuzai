@@ -32,7 +32,7 @@
       
       .main-logo { max-height: 80px; vertical-align: middle; }
 
-      #printHeaderInfo { display: none; } /* デフォルトは非表示 */
+      #printHeaderInfo { display: none; } /* デフォルトは非表示　 */
 
       .tabs {
         display: flex;
@@ -872,6 +872,10 @@
       // アクションフォーム用変数
       let scannedActionItems = [];
       let currentVoucherId = '';
+      
+      let currentDeployedSurgeries = [];
+      let submittedSurgeryIndices = [];
+      let lastFetchedDate = '';
 
       window.onload = function() {
         const today = new Date();
@@ -892,7 +896,7 @@
 
       function handleInteraction(e) {
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
-          if (['datePicker', 'userSelect', 'surgerySelect', 'qrFileInput', 'actionTypeSelect'].includes(e.target.id)) return;
+          if (['datePicker', 'userSelect', 'surgerySelect', 'qrFileInput', 'actionTypeSelect', 'actionSurgerySelect'].includes(e.target.id)) return;
           // アクションフォーム内の数量変更は即時反映なので除外
           if (e.target.classList.contains('action-qty-input')) return;
           markAsChanged();
@@ -953,6 +957,12 @@
       }
 
       function fetchDataForDate(dateStr) {
+        if (lastFetchedDate !== dateStr) {
+          submittedSurgeryIndices = [];
+          lastFetchedDate = dateStr;
+        }
+        currentDeployedSurgeries = [];
+
         if (!isRestoringState) {
           document.getElementById('checklist').innerHTML = '';
           document.getElementById('saveBtn').style.display = 'none';
@@ -1156,13 +1166,17 @@
             <div style="margin-bottom:15px; padding:12px; background:#f0f7ff; border-radius:8px; border:1px solid #cce5ff;">
               <label style="font-weight:bold; color:#004085; display:block; margin-bottom:8px;">📅 今日の手術からアイテムを一括展開</label>
               <div style="display:flex; gap:10px;">
-                <select id="actionSurgerySelect" style="flex:1; padding:10px; border-radius:6px; border:1px solid #b8daff; font-size:1em; outline:none;">
-                  <option value="">-- 手術を選択 --</option>
-                  ${(currentAppData && currentAppData.surgeries) ? currentAppData.surgeries.map((s, i) => `<option value="${i}">[${s.order}] ${s.name}</option>`).join('') : ''}
+                <select id="actionSurgerySelect" multiple style="flex:1; padding:5px; border-radius:6px; border:1px solid #b8daff; font-size:1em; outline:none; height:120px;">
+                  ${(currentAppData && currentAppData.surgeries) ? currentAppData.surgeries.map((s, i) => {
+                    const isSubmitted = submittedSurgeryIndices.includes(i);
+                    const colorStyle = isSubmitted ? 'color:#999; background-color:#f0f0f0;' : '';
+                    const textSuffix = isSubmitted ? ' (送信済)' : '';
+                    return `<option value="${i}" style="padding:4px; ${colorStyle}">[${s.order}] ${s.name}${textSuffix}</option>`;
+                  }).join('') : ''}
                 </select>
                 <button onclick="deploySurgeryItems()" style="padding:10px 15px; background-color:#007bff; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);">↓↓ 展開</button>
               </div>
-              <div style="font-size:0.8em; color:#004085; margin-top:5px;">※マスタの必要数が自動セットされます。使わなかった分を減らして保存してください。</div>
+              <div style="font-size:0.8em; color:#004085; margin-top:5px;">※複数選択可。ディスポ以外の必要数が自動セットされます。使わなかった分は減らして保存してください。</div>
             </div>
 
             <div class="record-area">
@@ -1212,14 +1226,11 @@
 
       function deploySurgeryItems() {
         const select = document.getElementById('actionSurgerySelect');
-        if (!select || select.value === '') {
+        if (!select) return;
+
+        const selectedOptions = Array.from(select.selectedOptions).filter(opt => opt.value !== '');
+        if (selectedOptions.length === 0) {
           alert('手術を選択してください。');
-          return;
-        }
-        const sIdx = parseInt(select.value, 10);
-        const surgery = currentAppData.surgeries[sIdx];
-        if (!surgery || !surgery.items || surgery.items.length === 0) {
-          alert('この手術にはアイテムが登録されていません。');
           return;
         }
 
@@ -1230,16 +1241,37 @@
         }
 
         scannedActionItems = [];
-        surgery.items.forEach(item => {
-          const req = parseInt(item.required, 10) || 0;
-          if (req > 0) {
-            scannedActionItems.push({
-              code: item.code,
-              name: item.name,
-              qty: req
-            });
-          }
+        currentDeployedSurgeries = selectedOptions.map(opt => parseInt(opt.value, 10));
+
+        currentDeployedSurgeries.forEach(sIdx => {
+          const surgery = currentAppData.surgeries[sIdx];
+          if (!surgery || !surgery.items) return;
+
+          surgery.items.forEach(item => {
+            const req = parseInt(item.required, 10) || 0;
+            if (req > 0) {
+              const masterItem = currentAppData.masterItems.find(m => m.code === item.code);
+              const kubun = masterItem ? masterItem.kubun : '';
+              
+              if (kubun !== 'ディスポ') {
+                const existingItem = scannedActionItems.find(i => i.code === item.code);
+                if (existingItem) {
+                  existingItem.qty += req;
+                } else {
+                  scannedActionItems.push({
+                    code: item.code,
+                    name: item.name,
+                    qty: req
+                  });
+                }
+              }
+            }
+          });
         });
+
+        if (scannedActionItems.length === 0) {
+          alert('展開対象のアイテム（ディスポ以外）がありません。');
+        }
 
         if (currentTab === 'opeAction') {
           const actionSelect = document.getElementById('actionTypeSelect');
@@ -1434,6 +1466,14 @@
           .then((msg) => {
             btns.forEach(b => b.disabled = false);
             
+            // 送信完了した手術を記録してグレーアウトに反映させる
+            currentDeployedSurgeries.forEach(idx => {
+              if (!submittedSurgeryIndices.includes(idx)) {
+                submittedSurgeryIndices.push(idx);
+              }
+            });
+            currentDeployedSurgeries = [];
+
             if (doPrint) {
               document.getElementById('vPrintDate').innerText = date;
               document.getElementById('vPrintFacility').innerText = facility;
