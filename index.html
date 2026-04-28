@@ -32,7 +32,7 @@
       
       .main-logo { max-height: 80px; vertical-align: middle; }
 
-      #printHeaderInfo { display: none; } /* デフォルトは非表示　*/
+      #printHeaderInfo { display: none; } /* デフォルトは非表示　 */
 
       .tabs {
         display: flex;
@@ -1065,7 +1065,7 @@
       }
 
       /* ==============================================================
-          アクションフォーム用ロジック
+         アクションフォーム用ロジック
       ============================================================== */
       function generateVoucherId() {
         const today = new Date();
@@ -1153,6 +1153,18 @@
                </div>
             </div>
 
+            <div style="margin-bottom:15px; padding:12px; background:#f0f7ff; border-radius:8px; border:1px solid #cce5ff;">
+              <label style="font-weight:bold; color:#004085; display:block; margin-bottom:8px;">📅 今日の手術からアイテムを一括展開</label>
+              <div style="display:flex; gap:10px;">
+                <select id="actionSurgerySelect" style="flex:1; padding:10px; border-radius:6px; border:1px solid #b8daff; font-size:1em; outline:none;">
+                  <option value="">-- 手術を選択 --</option>
+                  ${(currentAppData && currentAppData.surgeries) ? currentAppData.surgeries.map((s, i) => `<option value="${i}">[${s.order}] ${s.name}</option>`).join('') : ''}
+                </select>
+                <button onclick="deploySurgeryItems()" style="padding:10px 15px; background-color:#007bff; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);">↓↓ 展開</button>
+              </div>
+              <div style="font-size:0.8em; color:#004085; margin-top:5px;">※マスタの必要数が自動セットされます。使わなかった分を減らして保存してください。</div>
+            </div>
+
             <div class="record-area">
               <label>🛠️ アクションを選択してください</label>
               <select id="actionTypeSelect" style="width:100%;" onchange="handleActionTypeChange()">
@@ -1196,6 +1208,48 @@
         `;
         container.innerHTML = html;
         renderActionItems();
+      }
+
+      function deploySurgeryItems() {
+        const select = document.getElementById('actionSurgerySelect');
+        if (!select || select.value === '') {
+          alert('手術を選択してください。');
+          return;
+        }
+        const sIdx = parseInt(select.value, 10);
+        const surgery = currentAppData.surgeries[sIdx];
+        if (!surgery || !surgery.items || surgery.items.length === 0) {
+          alert('この手術にはアイテムが登録されていません。');
+          return;
+        }
+
+        if (scannedActionItems.length > 0) {
+          if (!confirm('現在リストにあるアイテムは上書きされます。よろしいですか？')) {
+            return;
+          }
+        }
+
+        scannedActionItems = [];
+        surgery.items.forEach(item => {
+          const req = parseInt(item.required, 10) || 0;
+          if (req > 0) {
+            scannedActionItems.push({
+              code: item.code,
+              name: item.name,
+              qty: req
+            });
+          }
+        });
+
+        if (currentTab === 'opeAction') {
+          const actionSelect = document.getElementById('actionTypeSelect');
+          if (actionSelect) {
+            actionSelect.value = '中材へ戻し';
+          }
+        }
+
+        renderActionItems();
+        handleActionTypeChange();
       }
 
       function renderActionItems() {
@@ -1459,7 +1513,7 @@
       }
 
       /* ==============================================================
-          アクション記録の編集機能
+         アクション記録の編集機能
       ============================================================== */
       function editVoucherFromRecord(voucherId) {
         if (!voucherId) return;
@@ -1488,7 +1542,7 @@
       }
 
       /* ==============================================================
-          既存の描画ロジック
+         既存の描画ロジック
       ============================================================== */
       function renderActionRecordTab(container) {
         if (!currentAppData || !currentAppData.actionRecords) {
