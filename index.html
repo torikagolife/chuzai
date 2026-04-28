@@ -1169,7 +1169,11 @@
       function updateActionQty(input) {
         const index = parseInt(input.dataset.index);
         let val = parseInt(input.value);
-        if (isNaN(val) || val < 1) val = 1;
+        const actionType = document.getElementById('actionTypeSelect') ? document.getElementById('actionTypeSelect').value : '';
+        
+        if (isNaN(val)) val = 1;
+        if (actionType !== '棚卸し調整' && val < 1) val = 1; // ★棚卸し調整以外は1未満を1にする
+        
         scannedActionItems[index].qty = val;
         input.value = val;
       }
@@ -1223,9 +1227,12 @@
           return; 
         }
 
-        if (/^\d+$/.test(decodedText)) {
+        if (/^-?\d+$/.test(decodedText)) { // ★マイナスも許可
           if (scannedActionItems.length > 0) {
-            const num = parseInt(decodedText, 10);
+            let num = parseInt(decodedText, 10);
+            const actionType = document.getElementById('actionTypeSelect') ? document.getElementById('actionTypeSelect').value : '';
+            if (actionType !== '棚卸し調整' && num < 1) num = 1; // ★棚卸し調整以外は1未満を1にする
+
             scannedActionItems[scannedActionItems.length - 1].qty = num;
             renderActionItems();
             console.log("数量を " + num + " に変更しました。");
