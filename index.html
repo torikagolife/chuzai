@@ -30,7 +30,7 @@
       }
       h2 { margin: 0 0 15px 0; text-align: center; color: #2c3e50; font-size: 1.6em; letter-spacing: 1px; }
       
-      .main-logo { max-height: 100px; vertical-align: middle; }
+      .main-logo { max-height: 80px; vertical-align: middle; }
 
       #printHeaderInfo { display: none; } /* デフォルトは非表示 */
 
@@ -676,9 +676,27 @@
         body.mobile-mode #recordArea,
         body.mobile-mode #fullCheckStatus,
         body.mobile-mode #checklist {
-          max-width: 480px;
+          max-width: 600px;
           margin-left: auto;
           margin-right: auto;
+        }
+
+        /* WEB版のみ日付と担当者を左上のヘッダーへ配置 */
+        .filters-flex {
+          position: absolute;
+          top: 15px;
+          left: 15px;
+          margin: 0;
+          z-index: 110;
+          gap: 10px;
+        }
+        #datePicker, #userSelect {
+          padding: 8px 12px;
+          font-size: 1.05em;
+          border-radius: 8px;
+        }
+        .filter-group label {
+          font-size: 0.9em;
         }
       }
     </style>
@@ -1667,6 +1685,7 @@
                      <option value="ディスポ" ${item.kubun === 'ディスポ' ? 'selected' : ''}>ディスポ</option>
                      <option value="洗浄・滅菌" ${item.kubun === '洗浄・滅菌' ? 'selected' : ''}>洗浄・滅菌</option>
                      <option value="洗浄のみ" ${item.kubun === '洗浄のみ' ? 'selected' : ''}>洗浄のみ</option>
+                     <option value="洗浄・滅菌" ${item.kubun === '洗浄・滅菌' ? 'selected' : ''}>洗浄・滅菌</option>
                    </select>
                  </div>
                  <div class="record-area"><label>アイテムメモ</label><input type="text" id="itemMemoInput" class="master-input" value="${item.itemMemo || ''}"></div></div></div>`;
