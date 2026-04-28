@@ -1174,9 +1174,12 @@
                     return `<label style="padding:4px; margin:0; border-radius:4px; display:flex; align-items:center; gap:5px; cursor:pointer; ${colorStyle}"><input type="checkbox" value="${i}" class="surgery-checkbox"> [${s.order}] ${s.name}${textSuffix}</label>`;
                   }).join('') : ''}
                 </div>
-                <button onclick="deploySurgeryItems()" style="padding:10px 15px; background-color:#007bff; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);">↓↓ 展開</button>
+                <div style="display:flex; flex-direction:column; gap:8px; width:140px;">
+                  <button onclick="deploySurgeryItems('chuzai')" style="padding:8px; background-color:#17a2b8; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:0.9em; flex:1;">🀄️ 中材戻し<br><span style="font-size:0.8em;font-weight:normal;">(ディスポ以外)</span></button>
+                  <button onclick="deploySurgeryItems('dispo')" style="padding:8px; background-color:#6c757d; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:0.9em; flex:1;">🗑️ 一括消費<br><span style="font-size:0.8em;font-weight:normal;">(ディスポのみ)</span></button>
+                </div>
               </div>
-              <div style="font-size:0.8em; color:#004085; margin-top:5px;">※複数選択可。ディスポ以外の必要数が自動セットされます。使わなかった分は減らして保存してください。</div>
+              <div style="font-size:0.8em; color:#004085; margin-top:5px;">※複数選択可。目的に応じてボタンを押してください。</div>
             </div>
 
             <div class="record-area">
@@ -1224,7 +1227,7 @@
         renderActionItems();
       }
 
-      function deploySurgeryItems() {
+      function deploySurgeryItems(deployType = 'chuzai') {
         const checkboxes = document.querySelectorAll('#actionSurgeryCheckboxes .surgery-checkbox:checked');
         if (checkboxes.length === 0) {
           alert('手術を選択してください。');
@@ -1250,7 +1253,9 @@
               const masterItem = currentAppData.masterItems.find(m => m.code === item.code);
               const kubun = masterItem ? masterItem.kubun : '';
               
-              if (kubun !== 'ディスポ') {
+              const isTarget = deployType === 'dispo' ? (kubun === 'ディスポ') : (kubun !== 'ディスポ');
+
+              if (isTarget) {
                 const existingItem = scannedActionItems.find(i => i.code === item.code);
                 if (existingItem) {
                   existingItem.qty += req;
@@ -1267,13 +1272,14 @@
         });
 
         if (scannedActionItems.length === 0) {
-          alert('展開対象のアイテム（ディスポ以外）がありません。');
+          const typeStr = deployType === 'dispo' ? 'ディスポ' : 'ディスポ以外';
+          alert(`展開対象のアイテム（${typeStr}）がありません。`);
         }
 
         if (currentTab === 'opeAction') {
           const actionSelect = document.getElementById('actionTypeSelect');
           if (actionSelect) {
-            actionSelect.value = '中材へ戻し';
+            actionSelect.value = deployType === 'dispo' ? 'ディスポ消費' : '中材へ戻し';
           }
         }
 
@@ -1708,7 +1714,7 @@
                     </tr>`;
           });
 
-          html += `    </tbody>
+          html += `   </tbody>
                     </table>
                   </div>`;
         });
