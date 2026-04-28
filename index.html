@@ -896,7 +896,7 @@
 
       function handleInteraction(e) {
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
-          if (['datePicker', 'userSelect', 'surgerySelect', 'qrFileInput', 'actionTypeSelect', 'actionSurgerySelect'].includes(e.target.id)) return;
+          if (['datePicker', 'userSelect', 'surgerySelect', 'qrFileInput', 'actionTypeSelect', 'actionSurgerySelect'].includes(e.target.id) || e.target.classList.contains('surgery-checkbox')) return;
           // アクションフォーム内の数量変更は即時反映なので除外
           if (e.target.classList.contains('action-qty-input')) return;
           markAsChanged();
@@ -1166,14 +1166,14 @@
             <div style="margin-bottom:15px; padding:12px; background:#f0f7ff; border-radius:8px; border:1px solid #cce5ff;">
               <label style="font-weight:bold; color:#004085; display:block; margin-bottom:8px;">📅 今日の手術からアイテムを一括展開</label>
               <div style="display:flex; gap:10px;">
-                <select id="actionSurgerySelect" multiple style="flex:1; padding:5px; border-radius:6px; border:1px solid #b8daff; font-size:1em; outline:none; height:120px;">
+                <div id="actionSurgeryCheckboxes" style="flex:1; padding:5px; border-radius:6px; border:1px solid #b8daff; background-color:#fff; font-size:1em; height:120px; overflow-y:auto; display:flex; flex-direction:column; gap:5px;">
                   ${(currentAppData && currentAppData.surgeries) ? currentAppData.surgeries.map((s, i) => {
                     const isSubmitted = submittedSurgeryIndices.includes(i);
                     const colorStyle = isSubmitted ? 'color:#999; background-color:#f0f0f0;' : '';
                     const textSuffix = isSubmitted ? ' (送信済)' : '';
-                    return `<option value="${i}" style="padding:4px; ${colorStyle}">[${s.order}] ${s.name}${textSuffix}</option>`;
+                    return `<label style="padding:4px; margin:0; border-radius:4px; display:flex; align-items:center; gap:5px; cursor:pointer; ${colorStyle}"><input type="checkbox" value="${i}" class="surgery-checkbox"> [${s.order}] ${s.name}${textSuffix}</label>`;
                   }).join('') : ''}
-                </select>
+                </div>
                 <button onclick="deploySurgeryItems()" style="padding:10px 15px; background-color:#007bff; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);">↓↓ 展開</button>
               </div>
               <div style="font-size:0.8em; color:#004085; margin-top:5px;">※複数選択可。ディスポ以外の必要数が自動セットされます。使わなかった分は減らして保存してください。</div>
@@ -1225,11 +1225,8 @@
       }
 
       function deploySurgeryItems() {
-        const select = document.getElementById('actionSurgerySelect');
-        if (!select) return;
-
-        const selectedOptions = Array.from(select.selectedOptions).filter(opt => opt.value !== '');
-        if (selectedOptions.length === 0) {
+        const checkboxes = document.querySelectorAll('#actionSurgeryCheckboxes .surgery-checkbox:checked');
+        if (checkboxes.length === 0) {
           alert('手術を選択してください。');
           return;
         }
@@ -1241,7 +1238,7 @@
         }
 
         scannedActionItems = [];
-        currentDeployedSurgeries = selectedOptions.map(opt => parseInt(opt.value, 10));
+        currentDeployedSurgeries = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
 
         currentDeployedSurgeries.forEach(sIdx => {
           const surgery = currentAppData.surgeries[sIdx];
