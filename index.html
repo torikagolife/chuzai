@@ -402,7 +402,7 @@
       .qr-download-btn { padding: 8px 12px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em; font-weight: bold; transition: 0.2s; }
       .qr-download-btn:hover { background-color: #5a6268; }
 
-      /* ステータス表・アクション記録表の共通スタイル（修正済） */
+      /* ステータス表・アクション記録表の共通スタイル */
       .status-table-wrapper {
         width: 100%;
         overflow-x: auto;
@@ -438,7 +438,7 @@
       .status-table tbody tr:hover {
         background-color: #f0f7ff;
       }
-      /* ★修正ポイント：横スクロール時に背景色が途切れないよう、テーブル幅に合わせて要素を追従（sticky）させます */
+      /* ★修正ポイント：暴走の原因だったsticky指定等を解除し、素直なブロック要素に戻しました */
       .kubun-header {
         background-color: #e2e8f0;
         padding: 10px 15px;
@@ -449,12 +449,6 @@
         border-left: 6px solid #007bff;
         display: flex;
         align-items: center;
-        position: sticky;
-        left: 0;
-        min-width: 100%;
-        width: max-content;
-        box-sizing: border-box;
-        z-index: 5;
       }
 
       /* 伝票印刷用エリアのスタイル */
@@ -562,7 +556,7 @@
         .status-table th, .status-table td {
           padding: 8px 10px;
           font-size: 0.9em;
-          white-space: nowrap; /* ★修正ポイント：モバイルでも確実に横スクロールさせる（潰れないようにする） */
+          white-space: nowrap; /* モバイルでも確実に横スクロールさせる */
         }
         .hide-mobile { display: none; }
       }
@@ -1580,8 +1574,9 @@
           else if (kubun === '洗浄のみ') icon = '💧';
           else if (kubun === 'ディスポ') icon = '🗑️';
 
-          html += `<div class="status-table-wrapper">
-                    <div class="kubun-header">${icon} ${kubun}</div>
+          // ★修正ポイント：見出し（.kubun-header）を横スクロールの箱の外に出し、暴走を完全に防ぎました
+          html += `<div class="kubun-header">${icon} ${kubun}</div>
+                   <div class="status-table-wrapper">
                     <table class="status-table" style="white-space: nowrap;">
                       <thead>
                         <tr>
@@ -1601,7 +1596,6 @@
                       <tbody>`;
 
           items.forEach(item => {
-            // ★実数を各項目の合計としてJavaScript側で計算
             const calcJissu = (parseInt(item.opeCount) || 0) + 
                               (parseInt(item.chuzaiCount) || 0) + 
                               (parseInt(item.cleanWait) || 0) + 
