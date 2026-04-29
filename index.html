@@ -581,7 +581,9 @@
           width: 100%;
         }
         .schedule-table tr {
-          display: block;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
           background: #fff;
           margin-bottom: 15px;
           border-radius: 12px;
@@ -596,17 +598,18 @@
           border: none !important;
           text-align: left !important;
           white-space: normal !important;
+          order: 99;
         }
         
         /* デフォルトで表示する項目: 1:操作, 2:オペ番, 4:時間, 5:手術名 */
         .schedule-table td:nth-child(1) {
           display: block;
-          position: absolute;
-          top: 15px;
-          right: 10px;
+          order: 3;
+          margin-left: 10px;
         }
         .schedule-table td:nth-child(2) {
-          display: inline-block;
+          display: block;
+          order: 1;
           font-weight: bold;
           color: #555;
           font-size: 1.1em;
@@ -616,11 +619,13 @@
           margin-right: 4px;
         }
         .schedule-table td:nth-child(4) {
-          display: inline-block;
+          display: block;
+          order: 2;
           margin-left: 10px;
         }
         .schedule-table td:nth-child(5) {
           display: block;
+          order: 4;
           width: 100%;
           margin-top: 5px;
           padding-top: 10px;
@@ -650,16 +655,16 @@
         /* 編集ボタン押下時（is-editing）に他の項目も表示する設定 */
         .schedule-table tr.is-editing td {
           display: block;
+          width: 100%;
         }
         .schedule-table tr.is-editing td:nth-child(1) {
-          position: relative;
-          top: 0; right: 0;
-          text-align: right;
-          margin-bottom: 10px;
+          width: auto;
+          margin-bottom: 0;
+          margin-left: auto;
         }
         .schedule-table tr.is-editing td:nth-child(2),
         .schedule-table tr.is-editing td:nth-child(4) {
-          display: inline-block;
+          width: auto;
         }
         .schedule-table tr.is-editing td:nth-child(3) { display: none; } /* 日付は非表示のまま */
         
