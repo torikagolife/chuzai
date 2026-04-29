@@ -2121,7 +2121,7 @@
                 const bg = isChecked ? '#e6ffed' : 'transparent';
                 const textColor = isChecked ? '#28a745' : '#999';
                 return `<td style="background-color:${bg}; min-width:80px;">
-                  <div style="font-size:1.1em; font-weight:bold;">${item.current || 0} / <span style="color:#d9534f">${item.required || 0}</span></div>
+                  <div style="font-size:1.1em; font-weight:bold;"><span style="color:#d9534f">${item.required || 0}</span></div>
                   <div style="font-size:0.85em; color:${textColor}; margin-top:4px; font-weight:bold;">${badgeText}</div>
                 </td>`;
               }).join('')}
@@ -2140,7 +2140,7 @@
               const bg = isChecked ? '#e6ffed' : 'transparent';
               const textColor = isChecked ? '#28a745' : '#999';
               return `<td style="background-color:${bg}; min-width:80px;">
-                <div style="font-size:1.1em; font-weight:bold;">${item.current || 0} / <span style="color:#d9534f">${item.required}</span></div>
+                <div style="font-size:1.1em; font-weight:bold;"><span style="color:#d9534f">${item.required}</span></div>
                 <div style="font-size:0.85em; color:${textColor}; margin-top:4px; font-weight:bold;">${badgeText}</div>
               </td>`;
             }).join('')}
@@ -2208,9 +2208,18 @@
           const masterItem = currentAppData.masterItems.find(m => m.code === item.code);
           const memoHtml = (masterItem && masterItem.itemMemo) ? `<div style="font-size:0.85em; color:#666; margin-top:6px; background:#f8f9fa; padding:4px 8px; border-radius:4px; border-left:3px solid #ffc107;">📝 ${masterItem.itemMemo}</div>` : '';
 
+          let calcJissu = item.current || 0;
+          if (masterItem) {
+            calcJissu = (parseInt(masterItem.opeCount) || 0) + 
+                        (parseInt(masterItem.chuzaiCount) || 0) + 
+                        (parseInt(masterItem.cleanWait) || 0) + 
+                        (parseInt(masterItem.moving) || 0) + 
+                        (parseInt(masterItem.repairing) || 0);
+          }
+
           const div = document.createElement('div');
           div.className = `card ${isChecked ? 'checked' : ''}`;
-          div.innerHTML = `<div class="item-info"><div><strong>${item.name}</strong> ${isChecked ? `<span class="status-badge">${badgeText}</span>` : ''}</div><div class="item-counts"><span class="req-count">必要:${item.required}</span> ${currentTab === 'daily' ? `/ 現在:${item.current}` : ''}</div>${memoHtml}</div><input type="checkbox" data-code="${item.code}" data-name="${item.name}" ${isChecked ? 'checked' : ''} style="transform:scale(1)">`;
+          div.innerHTML = `<div class="item-info"><div><strong>${item.name}</strong> ${isChecked ? `<span class="status-badge">${badgeText}</span>` : ''}</div><div class="item-counts"><span class="req-count">必要:${item.required}</span> ${currentTab === 'daily' ? `/ 現在:${calcJissu}` : ''}</div>${memoHtml}</div><input type="checkbox" data-code="${item.code}" data-name="${item.name}" ${isChecked ? 'checked' : ''} style="transform:scale(1)">`;
           div.querySelector('input').onchange = function() { 
             div.classList.toggle('checked', this.checked); 
             updateFullCheckDisplay(); 
