@@ -32,7 +32,7 @@
       
       .main-logo { max-height: 80px; vertical-align: middle; }
 
-      #printHeaderInfo { display: none; } /* デフォルトは非表示     */
+      #printHeaderInfo { display: none; } /* デフォルトは非表示      */
 
       .tabs {
         display: flex;
@@ -756,6 +756,66 @@
         .item-status-table td.is-clean::before { content: "✨ "; }
         .item-status-table td.is-move::before { content: "🚚 "; }
         .item-status-table td.is-repair::before { content: "🔧 "; }
+
+        /* ========================================================= */
+        /* ★追加：アクション記録のスマホ向けカード型レイアウト ★ */
+        /* ========================================================= */
+        .status-table-wrapper:has(.action-record-table) {
+          background: transparent !important;
+          box-shadow: none !important;
+          margin-bottom: 20px;
+          overflow: visible !important;
+        }
+        .action-record-table {
+          display: block;
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+        .action-record-table thead {
+          display: none;
+        }
+        .action-record-table tbody {
+          display: block;
+          width: 100%;
+        }
+        .action-record-table tr {
+          display: flex;
+          flex-wrap: wrap;
+          background: #fff;
+          margin-bottom: 12px;
+          border-radius: 10px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+          padding: 12px;
+          border: 1px solid #eaeaea;
+          align-items: center;
+        }
+        .action-record-table tr::after {
+          content: "";
+          display: block;
+          flex-basis: 100%;
+          height: 8px;
+          order: 4;
+        }
+        .action-record-table td {
+          display: none; /* 基本は全て非表示 */
+          padding: 0 !important;
+          border: none !important;
+          text-align: left !important;
+          white-space: nowrap !important;
+        }
+        
+        .action-record-table td.ar-date { display: block; order: 1; font-size: 0.9em; color: #666; margin-right: 8px; }
+        .action-record-table td.ar-time { display: block; order: 2; font-size: 0.9em; color: #666; margin-right: 8px; }
+        .action-record-table td.ar-id { display: block; order: 3; font-size: 0.9em; font-family: monospace; color: #007bff; font-weight: bold; flex-grow: 1; }
+        
+        .action-record-table td.ar-edit { display: block; order: 5; margin-right: 12px; }
+        .action-record-table td.ar-edit button { padding: 6px 16px !important; font-size: 1.1em !important; }
+        
+        .action-record-table td.ar-loc { display: block; order: 6; margin-right: 10px; }
+        .action-record-table td.ar-loc span { font-size: 1em !important; padding: 4px 10px !important; }
+        
+        .action-record-table td.ar-action { display: block; order: 7; font-size: 1.2em; font-weight: bold; color: #333; }
       }
 
       #qrModal {
@@ -1800,8 +1860,17 @@
           return;
         }
 
+        const uniqueRecords = [];
+        const voucherMap = new Map();
+        currentAppData.actionRecords.slice().reverse().forEach(rec => {
+          if (!voucherMap.has(rec.voucherId)) {
+            voucherMap.set(rec.voucherId, true);
+            uniqueRecords.push(rec);
+          }
+        });
+
         let html = `<div class="status-table-wrapper">
-                    <table class="status-table" style="white-space: nowrap;">
+                    <table class="status-table action-record-table" style="white-space: nowrap;">
                       <thead>
                         <tr>
                           <th>操作</th>
@@ -1810,9 +1879,6 @@
                           <th>伝票ID</th>
                           <th>ﾛｹｰｼｮﾝ</th>
                           <th>ｱｸｼｮﾝ</th>
-                          <th>ｱｲﾃﾑｺｰﾄﾞ</th>
-                          <th>アイテム</th>
-                          <th style="text-align:center;">数量</th>
                           <th>担当者</th>
                           <th>ステータス</th>
                           <th>受取日時</th>
@@ -1821,22 +1887,19 @@
                       </thead>
                       <tbody>`;
 
-        currentAppData.actionRecords.slice().reverse().forEach(rec => {
+        uniqueRecords.forEach(rec => {
           const statusStyle = rec.status === '移動中' ? 'color:#d9534f; font-weight:bold;' : 'color:#28a745; font-weight:bold;';
           html += `<tr>
-                    <td><button onclick="editVoucherFromRecord('${rec.voucherId}')" style="padding:4px 8px; font-size:0.8em; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">編集</button></td>
-                    <td>${rec.date || ''}</td>
-                    <td>${rec.time || ''}</td>
-                    <td style="font-family: monospace; color:#007bff; font-weight:bold;">${rec.voucherId || ''}</td>
-                    <td><span style="background-color:#e2e8f0; color:#4a5568; padding:2px 6px; border-radius:4px; font-size:0.85em;">${rec.location || ''}</span></td>
-                    <td style="font-weight: bold;">${rec.action || ''}</td>
-                    <td style="font-family: monospace;">${rec.itemCode || ''}</td>
-                    <td style="font-weight: bold;">${rec.itemName || ''}</td>
-                    <td style="text-align:center; font-weight:bold;">${rec.qty || 0}</td>
-                    <td>${rec.staff || ''}</td>
-                    <td style="${statusStyle}">${rec.status || ''}</td>
-                    <td style="font-size:0.85em;">${rec.recvDate || ''}</td>
-                    <td style="font-size:0.85em;">${rec.recvStaff || ''}</td>
+                    <td class="ar-edit"><button onclick="editVoucherFromRecord('${rec.voucherId}')" style="padding:4px 8px; font-size:0.8em; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">編集</button></td>
+                    <td class="ar-date">${rec.date || ''}</td>
+                    <td class="ar-time">${rec.time || ''}</td>
+                    <td class="ar-id" style="font-family: monospace; color:#007bff; font-weight:bold;">${rec.voucherId || ''}</td>
+                    <td class="ar-loc"><span style="background-color:#e2e8f0; color:#4a5568; padding:2px 6px; border-radius:4px; font-size:0.85em;">${rec.location || ''}</span></td>
+                    <td class="ar-action" style="font-weight: bold;">${rec.action || ''}</td>
+                    <td class="ar-staff">${rec.staff || ''}</td>
+                    <td class="ar-status" style="${statusStyle}">${rec.status || ''}</td>
+                    <td class="ar-recvdate" style="font-size:0.85em;">${rec.recvDate || ''}</td>
+                    <td class="ar-recvstaff" style="font-size:0.85em;">${rec.recvStaff || ''}</td>
                   </tr>`;
         });
 
