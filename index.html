@@ -241,25 +241,6 @@
       .card.checked { background-color: #e6ffed; border-color: #c3e6cb; }
       .card.has-value { background-color: #e6ffed; border-color: #c3e6cb; }
       
-      /* 一時停止アイテム用スタイル追加 */
-      .badge-stopped {
-        background-color: #dc3545;
-        color: white;
-        font-size: 0.75em;
-        padding: 2px 6px;
-        border-radius: 4px;
-        margin-left: 6px;
-        vertical-align: middle;
-        display: inline-block;
-      }
-      .card.stopped-item {
-        background-color: #f8f9fa;
-        border-color: #ddd;
-      }
-      .card.stopped-item .item-name {
-        color: #6c757d;
-      }
-
       .item-info { flex-grow: 1; margin-right: 15px; }
       .item-name { font-size: 1.1em; font-weight: bold; }
       .item-counts { font-size: 1.1em; font-weight: bold; margin-top: 4px; }
@@ -1439,11 +1420,6 @@
           alert(`未登録のアイテムコードです: ${decodedText}`);
           return;
         }
-        
-        if (masterItem.isStopped) {
-          alert(`このアイテム（${masterItem.name}）は現在「利用停止中」に設定されているため、アクションの対象にできません。`);
-          return;
-        }
 
         const actionType = document.getElementById('actionTypeSelect') ? document.getElementById('actionTypeSelect').value : '';
         const maxLimit = getMaxQty(masterItem.code, actionType);
@@ -1733,11 +1709,10 @@
                               (parseInt(item.moving) || 0) + 
                               (parseInt(item.repairing) || 0);
 
-            const stoppedBadge = item.isStopped ? '<span class="badge-stopped">⚠️停止中</span>' : '';
-            html += `<tr ${item.isStopped ? 'style="background-color:#f8f9fa; color:#6c757d;"' : ''}>
+            html += `<tr>
                       <td style="font-family: monospace; font-weight: bold; color: #007bff;">${item.code}</td>
                       <td><span style="background-color:#e2e8f0; color:#4a5568; padding:2px 6px; border-radius:4px; font-size:0.85em;">${item.defaultLoc || '-'}</span></td>
-                      <td style="font-weight: bold;">${item.name}${stoppedBadge}</td>
+                      <td style="font-weight: bold;">${item.name}</td>
                       <td style="text-align:center; font-weight:bold; color:#555;">${item.teisu || 0}</td>
                       <td style="text-align:center; font-weight:bold; color:#007bff;">${calcJissu}</td>
                       <td style="text-align:center;">${item.opeCount || 0}</td>
@@ -1848,12 +1823,9 @@
           
           const memoHtml = item.itemMemo ? `<div style="font-size:0.85em; color:#666; margin-top:6px; background:#f8f9fa; padding:4px 8px; border-radius:4px; border-left:3px solid #ffc107;">📝 ${item.itemMemo}</div>` : '';
 
-          const isStopped = item.isStopped;
-          const stoppedBadge = isStopped ? '<span class="badge-stopped">⚠️停止中</span>' : '';
-
-          html += `<div class="card ${hasValue ? 'has-value' : ''} ${isStopped ? 'stopped-item' : ''}">
+          html += `<div class="card ${hasValue ? 'has-value' : ''}">
                      <div class="item-info">
-                       <div class="item-name">${item.name}${stoppedBadge}<br>
+                       <div class="item-name">${item.name}<br>
                          <small style="display:inline-flex; align-items:center; margin-top:4px;">${locBadge}${item.code}</small>
                        </div>
                        ${memoHtml}
@@ -1893,8 +1865,7 @@
         let html = `<div class="master-layout"><div class="master-sidebar"><div class="master-sidebar-header"><button class="new-btn" onclick="selectItem(-1)">＋ 新規アイテムを追加</button></div><div class="master-list">`;
         const filteredItems = currentAppData.masterItems.filter(item => item.code !== 'ｱｲﾃﾑｺｰﾄﾞ');
         filteredItems.forEach((item, i) => {
-          const stoppedMark = item.isStopped ? '<span style="color:#dc3545;font-size:0.8em;margin-left:4px;">[停止]</span>' : '';
-          html += `<div class="master-list-item ${i === selectedItemIndex ? 'active' : ''}" onclick="selectItem(${i})"><span class="m-code">${item.code}</span><span class="m-name">${item.name}${stoppedMark}</span></div>`;
+          html += `<div class="master-list-item ${i === selectedItemIndex ? 'active' : ''}" onclick="selectItem(${i})"><span class="m-code">${item.code}</span><span class="m-name">${item.name}</span></div>`;
         });
         html += `</div></div><div class="master-main">`;
         const isNew = selectedItemIndex === -1;
@@ -1926,13 +1897,7 @@
                      <option value="洗浄・滅菌" ${item.kubun === '洗浄・滅菌' ? 'selected' : ''}>洗浄・滅菌</option>
                    </select>
                  </div>
-                 <div class="record-area"><label>アイテムメモ</label><input type="text" id="itemMemoInput" class="master-input" value="${item.itemMemo || ''}"></div>
-                 <div class="record-area" style="background:#fff3cd; padding:10px; border-radius:8px; border:1px solid #ffeeba;">
-                   <label style="margin:0; color:#856404; display:flex; align-items:center;">
-                     <input type="checkbox" id="itemIsStoppedInput" ${item.isStopped ? 'checked' : ''} style="transform: scale(1.5); margin-right: 10px;">
-                     <strong>このアイテムを一時停止にする（非表示）</strong>
-                   </label>
-                 </div></div></div>`;
+                 <div class="record-area"><label>アイテムメモ</label><input type="text" id="itemMemoInput" class="master-input" value="${item.itemMemo || ''}"></div></div></div>`;
         container.innerHTML = html;
 
         if (!isNew && item.code) {
@@ -2243,12 +2208,9 @@
           const masterItem = currentAppData.masterItems.find(m => m.code === item.code);
           const memoHtml = (masterItem && masterItem.itemMemo) ? `<div style="font-size:0.85em; color:#666; margin-top:6px; background:#f8f9fa; padding:4px 8px; border-radius:4px; border-left:3px solid #ffc107;">📝 ${masterItem.itemMemo}</div>` : '';
 
-          const isStopped = masterItem ? masterItem.isStopped : false;
-          const stoppedBadge = isStopped ? '<span class="badge-stopped">⚠️停止中</span>' : '';
-
           const div = document.createElement('div');
-          div.className = `card ${isChecked ? 'checked' : ''} ${isStopped ? 'stopped-item' : ''}`;
-          div.innerHTML = `<div class="item-info"><div><strong>${item.name}</strong> ${stoppedBadge} ${isChecked ? `<span class="status-badge">${badgeText}</span>` : ''}</div><div class="item-counts"><span class="req-count">必要:${item.required}</span> ${currentTab === 'daily' ? `/ 現在:${item.current}` : ''}</div>${memoHtml}</div><input type="checkbox" data-code="${item.code}" data-name="${item.name}" ${isChecked ? 'checked' : ''} style="transform:scale(1)">`;
+          div.className = `card ${isChecked ? 'checked' : ''}`;
+          div.innerHTML = `<div class="item-info"><div><strong>${item.name}</strong> ${isChecked ? `<span class="status-badge">${badgeText}</span>` : ''}</div><div class="item-counts"><span class="req-count">必要:${item.required}</span> ${currentTab === 'daily' ? `/ 現在:${item.current}` : ''}</div>${memoHtml}</div><input type="checkbox" data-code="${item.code}" data-name="${item.name}" ${isChecked ? 'checked' : ''} style="transform:scale(1)">`;
           div.querySelector('input').onchange = function() { 
             div.classList.toggle('checked', this.checked); 
             updateFullCheckDisplay(); 
@@ -2340,8 +2302,7 @@
             name: document.getElementById('itemNameInput').value,
             defaultLoc: document.getElementById('itemDefLocInput').value,
             kubun: document.getElementById('itemKubunInput').value, 
-            itemMemo: document.getElementById('itemMemoInput').value,
-            isStopped: document.getElementById('itemIsStoppedInput').checked
+            itemMemo: document.getElementById('itemMemoInput').value
           }).then(onSaveSuccess).catch(onSaveError);
 
         } else if (currentTab === 'locationMaster') {
