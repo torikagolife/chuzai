@@ -2341,7 +2341,7 @@
             defaultLoc: document.getElementById('itemDefLocInput').value,
             kubun: document.getElementById('itemKubunInput').value, 
             itemMemo: document.getElementById('itemMemoInput').value,
-            isStopped: document.getElementById('itemIsStoppedInput').checked ? 1 : 0
+            isStopped: document.getElementById('itemIsStoppedInput').checked
           }).then(onSaveSuccess).catch(onSaveError);
 
         } else if (currentTab === 'locationMaster') {
