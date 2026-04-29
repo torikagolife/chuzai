@@ -558,6 +558,12 @@
         }
         .hide-mobile { display: none; }
 
+        /* ★追加：展開アイテムのスマホ表示最適化 */
+        .hide-mobile-action { display: none !important; }
+        .action-items-table th, .action-items-table td {
+          white-space: normal !important;
+        }
+
         /* ========================================================= */
         /* ★追加：手術スケジュールのスマホ向けカード型レイアウト ★ */
         /* ========================================================= */
@@ -1460,11 +1466,11 @@
             
             <div style="font-size:0.9em; color:#666; margin-bottom:5px;">※同じアイテムをスキャンすると数量が＋1されます。<br>※数字だけのQRを読み込むと、直前の数量を上書きします。</div>
             
-            <div class="status-table-wrapper" style="margin-bottom:20px;">
-              <table class="status-table" style="min-width: 100%;">
+            <div class="status-table-wrapper action-items-wrapper" style="margin-bottom:20px;">
+              <table class="status-table action-items-table" style="min-width: 100%;">
                 <thead>
                   <tr>
-                    <th>ｱｲﾃﾑｺｰﾄﾞ</th>
+                    <th class="hide-mobile-action">ｱｲﾃﾑｺｰﾄﾞ</th>
                     <th>ｱｲﾃﾑ名</th>
                     <th style="text-align:center; width:80px;">数量</th>
                     <th style="text-align:center; width:60px;">操作</th>
@@ -1598,8 +1604,8 @@
           const maxAttr = (actionType !== '新規・補充' && actionType !== '棚卸し調整') ? `max="${maxLimit}"` : '';
           html += `
             <tr>
-              <td style="font-family:monospace; color:#007bff; font-weight:bold;">${item.code}</td>
-              <td style="font-weight:bold;">${item.name}</td>
+              <td class="hide-mobile-action" style="font-family:monospace; color:#007bff; font-weight:bold;">${item.code}</td>
+              <td style="font-weight:bold; word-break:break-all;">${item.name}</td>
               <td style="text-align:center; padding: 5px;">
                 <input type="number" class="master-item-input action-qty-input" style="width:70px !important; padding:5px !important;" data-index="${index}" value="${item.qty}" ${maxAttr} onchange="updateActionQty(this)">
               </td>
