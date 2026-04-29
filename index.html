@@ -1923,13 +1923,12 @@
                      <option value="ディスポ" ${item.kubun === 'ディスポ' ? 'selected' : ''}>ディスポ</option>
                      <option value="洗浄・滅菌" ${item.kubun === '洗浄・滅菌' ? 'selected' : ''}>洗浄・滅菌</option>
                      <option value="洗浄のみ" ${item.kubun === '洗浄のみ' ? 'selected' : ''}>洗浄のみ</option>
-                     <option value="洗浄・滅菌" ${item.kubun === '洗浄・滅菌' ? 'selected' : ''}>洗浄・滅菌</option>
                    </select>
                  </div>
                  <div class="record-area"><label>アイテムメモ</label><input type="text" id="itemMemoInput" class="master-input" value="${item.itemMemo || ''}"></div>
                  <div class="record-area" style="background:#fff3cd; padding:10px; border-radius:8px; border:1px solid #ffeeba;">
                    <label style="margin:0; color:#856404; display:flex; align-items:center;">
-                     <input type="checkbox" id="itemIsStoppedInput" ${item.isStopped ? 'checked' : ''} style="transform: scale(1.5); margin-right: 10px;">
+                     <input type="checkbox" id="itemIsStoppedInput" ${item.isStopped ? 'checked="checked"' : ''} style="transform: scale(1.5); margin-right: 10px;">
                      <strong>このアイテムを一時停止にする（非表示）</strong>
                    </label>
                  </div></div></div>`;
@@ -2333,15 +2332,15 @@
         }
         btn.disabled = true; btn.innerText = '保存中...';
 
-        if (currentTab === 'itemMaster') {
+if (currentTab === 'itemMaster') {
           callGasApi('saveItemMasterData', {
             isNew: selectedItemIndex === -1,
             code: document.getElementById('itemCodeInput').value,
             name: document.getElementById('itemNameInput').value,
             defaultLoc: document.getElementById('itemDefLocInput').value,
-            kubun: document.getElementById('itemKubunInput').value, 
+            kubun: document.getElementById('itemKubunInput').value,
             itemMemo: document.getElementById('itemMemoInput').value,
-            isStopped: document.getElementById('itemIsStoppedInput').checked ? 1 : 0
+            isStopped: Number(document.getElementById('itemIsStoppedInput').checked ? 1 : 0)
           }).then(onSaveSuccess).catch(onSaveError);
 
         } else if (currentTab === 'locationMaster') {
