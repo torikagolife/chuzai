@@ -32,7 +32,7 @@
       
       .main-logo { max-height: 80px; vertical-align: middle; }
 
-      #printHeaderInfo { display: none; } /* デフォルトは非表示　　 */
+      #printHeaderInfo { display: none; } /* デフォルトは非表示     */
 
       .tabs {
         display: flex;
@@ -417,7 +417,6 @@
         border-radius: 8px;
         overflow: hidden;
       }
-      /* ★修正ポイント：セルの文字が縦に押しつぶされるのを防ぐために強制的に折り返しを禁止（nowrap）します */
       .status-table th, .status-table td {
         padding: 12px 15px;
         text-align: left;
@@ -438,7 +437,6 @@
       .status-table tbody tr:hover {
         background-color: #f0f7ff;
       }
-      /* ★修正ポイント：暴走の原因だったsticky指定等を解除し、素直なブロック要素に戻しました */
       .kubun-header {
         background-color: #e2e8f0;
         padding: 10px 15px;
@@ -678,6 +676,86 @@
         .schedule-table tr.is-editing td:nth-child(n+11) {
           display: none; /* 個別のアイテム数はスマホで編集中も長くなるので非表示 */
         }
+
+        /* ========================================================= */
+        /* ★追加：アイテムステータスのスマホ向けダッシュボード型レイアウト ★ */
+        /* ========================================================= */
+        .status-table-wrapper:has(.item-status-table) {
+          background: transparent !important;
+          box-shadow: none !important;
+          margin-bottom: 20px;
+          overflow: visible !important;
+        }
+        .item-status-table {
+          display: block;
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+        .item-status-table thead {
+          display: none;
+        }
+        .item-status-table tbody {
+          display: block;
+          width: 100%;
+        }
+        .item-status-table tr {
+          display: block;
+          background: #fff;
+          margin-bottom: 12px;
+          border-radius: 10px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+          padding: 12px;
+          border: 1px solid #eaeaea;
+          position: relative;
+        }
+        .item-status-table td {
+          display: none; /* 基本は全て非表示 */
+          padding: 0 !important;
+          border: none !important;
+          text-align: left !important;
+          white-space: normal !important;
+        }
+        .item-status-table td.is-name {
+          display: block;
+          font-size: 1.15em;
+          margin-bottom: 8px;
+          padding-right: 60px !important; /* 場所バッジ用スペース */
+          color: #333;
+        }
+        .item-status-table td.is-name::before {
+          content: "📦 ";
+        }
+        .item-status-table td.is-loc {
+          display: block;
+          position: absolute;
+          top: 12px;
+          right: 12px;
+        }
+        /* 定数(is-teisu)・実数(is-jissu)・コード(is-code)・メモ(is-memo)はスマホでは非表示のまま */
+
+        /* 各数量をタグのように並べる */
+        .item-status-table td.is-ope,
+        .item-status-table td.is-chuzai,
+        .item-status-table td.is-clean,
+        .item-status-table td.is-move,
+        .item-status-table td.is-repair {
+          display: inline-block;
+          font-size: 0.9em;
+          font-weight: bold;
+          margin-right: 6px;
+          margin-bottom: 6px;
+          background: #f8f9fa;
+          padding: 4px 8px !important;
+          border-radius: 6px;
+          border: 1px solid #e2e8f0;
+          color: #555;
+        }
+        .item-status-table td.is-ope::before { content: "🔩 "; }
+        .item-status-table td.is-chuzai::before { content: "🀄️ "; }
+        .item-status-table td.is-clean::before { content: "✨ "; }
+        .item-status-table td.is-move::before { content: "🚚 "; }
+        .item-status-table td.is-repair::before { content: "🔧 "; }
       }
 
       #qrModal {
@@ -1800,10 +1878,10 @@
           else if (kubun === '洗浄のみ') icon = '💧';
           else if (kubun === 'ディスポ') icon = '🗑️';
 
-          // ★修正ポイント：見出し（.kubun-header）を横スクロールの箱の外に出し、暴走を完全に防ぎました
+          // ★修正ポイント：テーブルとセルにクラスを追加し、CSSでスマホ版のカードレイアウトを適用可能にしました
           html += `<div class="kubun-header">${icon} ${kubun}</div>
                    <div class="status-table-wrapper">
-                    <table class="status-table" style="white-space: nowrap;">
+                    <table class="status-table item-status-table" style="white-space: nowrap;">
                       <thead>
                         <tr>
                           <th>コード</th>
@@ -1829,17 +1907,17 @@
                               (parseInt(item.repairing) || 0);
 
             html += `<tr>
-                      <td style="font-family: monospace; font-weight: bold; color: #007bff;">${item.code}</td>
-                      <td><span style="background-color:#e2e8f0; color:#4a5568; padding:2px 6px; border-radius:4px; font-size:0.85em;">${item.defaultLoc || '-'}</span></td>
-                      <td style="font-weight: bold;">${item.name}</td>
-                      <td style="text-align:center; font-weight:bold; color:#555;">${item.teisu || 0}</td>
-                      <td style="text-align:center; font-weight:bold; color:#007bff;">${calcJissu}</td>
-                      <td style="text-align:center;">${item.opeCount || 0}</td>
-                      <td style="text-align:center;">${item.chuzaiCount || 0}</td>
-                      <td style="text-align:center;">${item.cleanWait || 0}</td>
-                      <td style="text-align:center;">${item.moving || 0}</td>
-                      <td style="text-align:center; color:#d9534f;">${item.repairing || 0}</td>
-                      <td class="hide-mobile" style="font-size: 0.9em; color: #666; white-space: normal; min-width: 150px;">${item.itemMemo || ''}</td>
+                      <td class="is-code" style="font-family: monospace; font-weight: bold; color: #007bff;">${item.code}</td>
+                      <td class="is-loc"><span style="background-color:#e2e8f0; color:#4a5568; padding:2px 6px; border-radius:4px; font-size:0.85em;">${item.defaultLoc || '-'}</span></td>
+                      <td class="is-name" style="font-weight: bold;">${item.name}</td>
+                      <td class="is-teisu" style="text-align:center; font-weight:bold; color:#555;">${item.teisu || 0}</td>
+                      <td class="is-jissu" style="text-align:center; font-weight:bold; color:#007bff;">${calcJissu}</td>
+                      <td class="is-ope" style="text-align:center;">${item.opeCount || 0}</td>
+                      <td class="is-chuzai" style="text-align:center;">${item.chuzaiCount || 0}</td>
+                      <td class="is-clean" style="text-align:center;">${item.cleanWait || 0}</td>
+                      <td class="is-move" style="text-align:center;">${item.moving || 0}</td>
+                      <td class="is-repair" style="text-align:center; color:#d9534f;">${item.repairing || 0}</td>
+                      <td class="is-memo hide-mobile" style="font-size: 0.9em; color: #666; white-space: normal; min-width: 150px;">${item.itemMemo || ''}</td>
                     </tr>`;
           });
 
