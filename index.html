@@ -559,6 +559,120 @@
           white-space: nowrap; /* モバイルでも確実に横スクロールさせる */
         }
         .hide-mobile { display: none; }
+
+        /* ========================================================= */
+        /* ★追加：手術スケジュールのスマホ向けカード型レイアウト ★ */
+        /* ========================================================= */
+        .schedule-table-container {
+          background: transparent !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          margin-bottom: 20px;
+          overflow: visible !important; /* 横スクロール解除 */
+        }
+        .schedule-table {
+          display: block;
+        }
+        .schedule-table thead {
+          display: none; /* スマホではヘッダー非表示 */
+        }
+        .schedule-table tbody {
+          display: block;
+          width: 100%;
+        }
+        .schedule-table tr {
+          display: block;
+          background: #fff;
+          margin-bottom: 15px;
+          border-radius: 12px;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+          padding: 15px;
+          border: 1px solid #eaeaea;
+          position: relative;
+        }
+        .schedule-table td {
+          display: none; /* 基本的に全非表示 */
+          padding: 5px 0 !important;
+          border: none !important;
+          text-align: left !important;
+          white-space: normal !important;
+        }
+        
+        /* デフォルトで表示する項目: 1:操作, 2:オペ番, 4:時間, 5:手術名 */
+        .schedule-table td:nth-child(1) {
+          display: block;
+          position: absolute;
+          top: 15px;
+          right: 10px;
+        }
+        .schedule-table td:nth-child(2) {
+          display: inline-block;
+          font-weight: bold;
+          color: #555;
+          font-size: 1.1em;
+        }
+        .schedule-table td:nth-child(2)::before {
+          content: "No.";
+          margin-right: 4px;
+        }
+        .schedule-table td:nth-child(4) {
+          display: inline-block;
+          margin-left: 10px;
+        }
+        .schedule-table td:nth-child(5) {
+          display: block;
+          width: 100%;
+          margin-top: 5px;
+          padding-top: 10px;
+          border-top: 1px dashed #ccc;
+        }
+        .schedule-table td:nth-child(5) select {
+          width: 100%;
+          font-size: 1.3em !important; /* 手術名を目立たせる */
+          color: #007bff;
+          font-weight: bold;
+          padding: 10px !important;
+          box-sizing: border-box;
+          min-width: 0 !important;
+          border: 2px solid #007bff !important;
+          background-color: #f0f7ff !important;
+          border-radius: 8px;
+        }
+        .schedule-table td:nth-child(4) input[type="time"] {
+          font-size: 1.1em;
+          padding: 4px 8px;
+          font-weight: bold;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          background: #f8f9fa;
+        }
+
+        /* 編集ボタン押下時（is-editing）に他の項目も表示する設定 */
+        .schedule-table tr.is-editing td {
+          display: block;
+        }
+        .schedule-table tr.is-editing td:nth-child(1) {
+          position: relative;
+          top: 0; right: 0;
+          text-align: right;
+          margin-bottom: 10px;
+        }
+        .schedule-table tr.is-editing td:nth-child(2),
+        .schedule-table tr.is-editing td:nth-child(4) {
+          display: inline-block;
+        }
+        .schedule-table tr.is-editing td:nth-child(3) { display: none; } /* 日付は非表示のまま */
+        
+        /* ラベルの付与 */
+        .schedule-table tr.is-editing td:nth-child(6)::before { content: "オペ室："; display: block; font-size: 0.85em; color: #666; margin-bottom: 2px; font-weight: bold; }
+        .schedule-table tr.is-editing td:nth-child(7)::before { content: "備考(ﾏｽﾀ)："; display: block; font-size: 0.85em; color: #666; margin-bottom: 2px; font-weight: bold; }
+        .schedule-table tr.is-editing td:nth-child(8)::before { content: "注意点："; display: block; font-size: 0.85em; color: #666; margin-bottom: 2px; font-weight: bold; }
+        .schedule-table tr.is-editing td:nth-child(9)::before { content: "記録："; display: block; font-size: 0.85em; color: #666; margin-bottom: 2px; font-weight: bold; }
+        .schedule-table tr.is-editing td:nth-child(10)::before { content: "ﾌﾙﾁｪｯｸ："; display: inline-block; font-size: 0.85em; color: #666; margin-right: 5px; font-weight: bold; }
+        
+        .schedule-table tr.is-editing td:nth-child(n+11) {
+          display: none; /* 個別のアイテム数はスマホで編集中も長くなるので非表示 */
+        }
       }
 
       #qrModal {
@@ -1948,6 +2062,7 @@
 
       function focusEdit(btn) {
         const tr = btn.closest('tr');
+        tr.classList.add('is-editing'); // ★ここを追加（スマホ編集時に他の項目を表示するため）
         tr.querySelectorAll('.edit-target').forEach(el => {
           el.disabled = false;
         });
