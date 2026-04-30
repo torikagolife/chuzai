@@ -1101,6 +1101,17 @@
       </div>
     </div>
 
+    <div id="shortageModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1200; justify-content:center; align-items:center;">
+      <div style="background:#fff; width:90%; max-width:500px; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.2); display:flex; flex-direction:column; max-height:80vh;">
+        <h3 style="margin-top:0; margin-bottom:15px; color:#333; text-align:center; border-bottom:2px solid #ffc107; padding-bottom:10px;">⚠️ 明日の不足アイテム抽出結果</h3>
+        <div id="shortageList" style="flex:1; overflow-y:auto; padding-right:10px; display:flex; flex-direction:column; gap:10px;">
+        </div>
+        <div style="margin-top:20px;">
+          <button onclick="closeShortageModal()" style="width:100%; padding:12px; background-color:#6c757d; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1.1em;">閉じる</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       // =========================================================
       // 【重要】GASのデプロイURLをここに設定してください
@@ -1657,11 +1668,6 @@
       async function handleExtractTomorrowShortages() {
         const data = await getTomorrowData();
         if(data) {
-            if (scannedActionItems.length > 0) {
-                if (!confirm('現在リストにあるアイテムは上書きされます。よろしいですか？')) return;
-            }
-            scannedActionItems = [];
-            
             const reqCounts = {};
             data.surgeries.forEach(s => {
                 if(s.items) {
@@ -1675,36 +1681,61 @@
             });
 
             const masterItems = currentAppData.masterItems;
+            const shortages = [];
+
             Object.keys(reqCounts).forEach(code => {
                 const req = reqCounts[code];
                 const mItem = masterItems.find(m => m.code === code);
                 if(mItem) {
+                    const ope = parseInt(mItem.opeCount, 10) || 0;
                     const chuzai = parseInt(mItem.chuzaiCount, 10) || 0;
-                    if(req > chuzai) {
-                        scannedActionItems.push({
-                            code: code,
+                    const cleanWait = parseInt(mItem.cleanWait, 10) || 0;
+                    const moving = parseInt(mItem.moving, 10) || 0;
+                    const repairing = parseInt(mItem.repairing, 10) || 0;
+                    
+                    const jissu = ope + chuzai + cleanWait + moving + repairing;
+                    const currentTotal = ope + chuzai; // 手術室数＋中材数
+
+                    if(req > currentTotal) {
+                        shortages.push({
                             name: mItem.name,
-                            qty: req - chuzai
+                            req: req,
+                            jissu: jissu,
+                            ope: ope,
+                            chuzai: chuzai,
+                            shortage: currentTotal - req // マイナスになるように
                         });
                     }
                 }
             });
 
-            if(scannedActionItems.length === 0) {
-                alert('明日の不足アイテムはありません！');
+            const listContainer = document.getElementById('shortageList');
+            if(shortages.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center; color:#28a745; font-weight:bold; padding:20px;">明日の不足アイテムはありません！🎉</p>';
             } else {
-                alert(scannedActionItems.length + '件の不足アイテムを抽出しました。');
-            }
-
-            const actionSelect = document.getElementById('actionTypeSelect');
-            if (actionSelect) {
-                // 不足分を補うアクションとして仮で滅菌完了にするか、そのままか
-                // 抽出してどうするかはユーザー次第なので、とりあえずそのまま
+                let html = '';
+                shortages.forEach(s => {
+                    html += `
+                    <div style="background:#fff3cd; border:1px solid #ffeeba; border-radius:8px; padding:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                      <div style="font-weight:bold; font-size:1.15em; color:#333; margin-bottom:8px;">${s.name}</div>
+                      <div style="font-size:1em; color:#555; line-height:1.6;">
+                          必要数: <strong>${s.req}</strong> &nbsp;
+                          📦 <strong>${s.jissu}</strong> &nbsp;
+                          🔩 <strong>${s.ope}</strong> &nbsp;
+                          🀄️ <strong>${s.chuzai}</strong> &nbsp;
+                          <span style="color:#d9534f; font-weight:bold; background:#fdeea1; padding:2px 6px; border-radius:4px;">🖩 ${s.shortage}</span>
+                      </div>
+                    </div>`;
+                });
+                listContainer.innerHTML = html;
             }
             
-            renderActionItems();
-            handleActionTypeChange();
+            document.getElementById('shortageModal').style.display = 'flex';
         }
+      }
+
+      function closeShortageModal() {
+        document.getElementById('shortageModal').style.display = 'none';
       }
 
       function renderActionItems() {
