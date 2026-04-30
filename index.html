@@ -857,6 +857,10 @@
       /* 印刷時のスタイル制御（伝票モード切替含む） */
       @media print {
         /* 伝票モード時は基本要素を非表示 */
+        body.printing-voucher {
+          background-color: #fff !important;
+          padding: 0 !important;
+        }
         body.printing-voucher #headerArea,
         body.printing-voucher #memoArea,
         body.printing-voucher #recordArea,
@@ -864,7 +868,9 @@
         body.printing-voucher #checklist,
         body.printing-voucher .tabs,
         body.printing-voucher #loading,
-        body.printing-voucher #progressContainer {
+        body.printing-voucher #progressContainer,
+        body.printing-voucher #qrModal,
+        body.printing-voucher #surgerySelectModal {
           display: none !important;
         }
 
@@ -1169,6 +1175,11 @@
         fetchDataForDate(todayStr);
         window.addEventListener('resize', applyStickyToScheduleTable);
       };
+
+      // 印刷後のクラス解除用イベントリスナー（スマホ等のプレビュー対策）
+      window.addEventListener('afterprint', () => {
+        document.body.classList.remove('printing-voucher');
+      });
 
       document.addEventListener('input', handleInteraction);
       document.addEventListener('change', handleInteraction);
@@ -1862,6 +1873,28 @@
         const facility = currentTab === 'opeAction' ? '手術室' : '中材';
         const date = document.getElementById('datePicker').value;
 
+        // ★修正点1: GASへの通信前に同期的に印刷を実行する
+        if (doPrint) {
+          document.getElementById('vPrintDate').innerText = date;
+          document.getElementById('vPrintFacility').innerText = facility;
+          document.getElementById('vPrintAction').innerText = actionType;
+          document.getElementById('vPrintUser').innerText = userName;
+          document.getElementById('vPrintQrId').innerText = currentVoucherId;
+          
+          renderQrCode('vPrintQrCode', currentVoucherId);
+
+          const vTbody = document.getElementById('vPrintTbody');
+          vTbody.innerHTML = scannedActionItems.map(item => `
+            <tr>
+              <td style="font-family:monospace; font-weight:bold;">${item.code}</td>
+              <td style="font-weight:bold;">${item.name}</td>
+              <td style="text-align:center; font-weight:bold;">${item.qty}</td>
+            </tr>
+          `).join('');
+
+          executeVoucherPrint();
+        }
+
         const payload = {
           voucherId: currentVoucherId,
           date: date,
@@ -1891,26 +1924,8 @@
             currentDeployedSurgeries = [];
             currentDeployType = '';
 
-            if (doPrint) {
-              document.getElementById('vPrintDate').innerText = date;
-              document.getElementById('vPrintFacility').innerText = facility;
-              document.getElementById('vPrintAction').innerText = actionType;
-              document.getElementById('vPrintUser').innerText = userName;
-              document.getElementById('vPrintQrId').innerText = currentVoucherId;
-              
-              renderQrCode('vPrintQrCode', currentVoucherId);
-
-              const vTbody = document.getElementById('vPrintTbody');
-              vTbody.innerHTML = scannedActionItems.map(item => `
-                <tr>
-                  <td style="font-family:monospace; font-weight:bold;">${item.code}</td>
-                  <td style="font-weight:bold;">${item.name}</td>
-                  <td style="text-align:center; font-weight:bold;">${item.qty}</td>
-                </tr>
-              `).join('');
-
-              executeVoucherPrint();
-            } else {
+            // ★修正点2: 印刷した場合は被るのでアラートを出さない（出してもOKなら外してください）
+            if (!doPrint) {
               alert(msg);
             }
             
@@ -1961,12 +1976,15 @@
         window.print();
       }
 
+      // ★修正点3: setTimeoutを使わず確実に印刷ダイアログを出し、その後クラスを外す
       function executeVoucherPrint() {
         document.body.classList.add('printing-voucher');
         window.print();
+        
+        // Safari等で afterprint イベントが発火しなかった時のための保険（10秒）
         setTimeout(() => {
           document.body.classList.remove('printing-voucher');
-        }, 1000);
+        }, 10000);
       }
 
       /* ==============================================================
