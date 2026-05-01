@@ -1266,7 +1266,30 @@
         currentDeployedSurgeries = [];
         currentDeployType = '';
 
-        if (!isRestoringState) {
+        document.getElementById('headerArea').style.display = 'block';
+
+        // ==========================================
+        // ★ 対策3：ローカルキャッシュ（爆速表示用）の読み込み
+        // ==========================================
+        const cacheKey = 'pickingPig_localCache_' + dateStr;
+        const cachedDataStr = localStorage.getItem(cacheKey);
+        let hasCache = false;
+
+        if (cachedDataStr) {
+          try {
+            const cachedData = JSON.parse(cachedDataStr);
+            if (cachedData && cachedData.date) {
+              // キャッシュがあれば通信を待たずに即時描画（職人さんを待たせない！）
+              onDataReceived(cachedData, true);
+              hasCache = true;
+            }
+          } catch(e) {
+            console.error("キャッシュ読込エラー", e);
+          }
+        }
+
+        // キャッシュがない場合のみ、ローディング画面（クルクル）を出す
+        if (!hasCache && !isRestoringState) {
           document.getElementById('checklist').innerHTML = '';
           document.getElementById('saveBtn').style.display = 'none';
           document.getElementById('memoArea').style.display = 'none';
@@ -1276,17 +1299,40 @@
           const progContainer = document.getElementById('progressContainer');
           if (progContainer) progContainer.style.display = 'none';
         }
-        document.getElementById('headerArea').style.display = 'block';
         
+        // ==========================================
+        // ★ 画面を表示したまま、裏側でGASから最新データを取得
+        // ==========================================
         callGasApi('getAppData', dateStr)
-          .then(onDataReceived)
+          .then(data => {
+            // 最新データが届いたらローカルストレージを上書き
+            localStorage.setItem(cacheKey, JSON.stringify(data));
+            // 画面を最新状態でサイレント更新
+            onDataReceived(data, false);
+          })
           .catch(err => {
-            document.getElementById('loading').innerText = 'データ取得に失敗しました';
-            alert('データ取得エラー: ' + err.message);
+            if (!hasCache) {
+              // キャッシュもなくエラーになった場合のみ画面に表示
+              document.getElementById('loading').innerText = 'データ取得に失敗しました';
+              alert('データ取得エラー: ' + err.message);
+            } else {
+              console.warn('バックグラウンドでの最新データ取得に失敗しました', err);
+            }
           });
       }
 
-      function onDataReceived(data) {
+      function onDataReceived(data, isFromCache = false) {
+        // ★ 対策3の保護ロジック：ユーザーが入力中の場合は裏側のデータ更新で画面を上書きしない
+        if (!isFromCache) {
+          const btn = document.getElementById('saveBtn');
+          const isScanning = (typeof scannedActionItems !== 'undefined' && scannedActionItems.length > 0);
+          if ((btn && btn.classList.contains('needs-saving')) || isScanning) {
+            console.log("入力中のため、最新データによる画面の自動更新をスキップしました");
+            currentAppData = data; // データだけ裏で最新化しておく
+            return;
+          }
+        }
+
         currentAppData = data;
         document.getElementById('loading').style.display = 'none';
         
@@ -1318,7 +1364,9 @@
         if (isRestoringState) {
           setTimeout(() => {
             window.scrollTo(0, savedScrollY);
-            isRestoringState = false;
+            if (!isFromCache) { // ★ 通信完了時のみ復元フラグを折る
+              isRestoringState = false;
+            }
           }, 50); 
         }
       }
@@ -1825,6 +1873,11 @@
             }).then(msg => {
               if (document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
               alert(msg);
+              
+              // ★保存後は古いキャッシュを表示させないため削除
+              const dateToClear = document.getElementById('datePicker').value;
+              localStorage.removeItem('pickingPig_localCache_' + dateToClear);
+
               scannedActionItems = [];
               currentVoucherId = generateVoucherId();
               renderActionItems();
@@ -1904,7 +1957,6 @@
         const facility = currentTab === 'opeAction' ? '手術室' : '中材';
         const date = document.getElementById('datePicker').value;
 
-        // ★修正点1: GASへの通信前に同期的に印刷を実行する
         if (doPrint) {
           document.getElementById('vPrintDate').innerText = date;
           document.getElementById('vPrintFacility').innerText = facility;
@@ -1955,11 +2007,15 @@
             currentDeployedSurgeries = [];
             currentDeployType = '';
 
-            // ★修正点2: 印刷した場合は被るのでアラートを出さない（出してもOKなら外してください）
+            // ★印刷した場合は被るのでアラートを出さない
             if (!doPrint) {
               alert(msg);
             }
             
+            // ★保存後は古いキャッシュを表示させないため削除
+            const dateToClear = document.getElementById('datePicker').value;
+            localStorage.removeItem('pickingPig_localCache_' + dateToClear);
+
             scannedActionItems = [];
             currentVoucherId = generateVoucherId();
             renderActionItems();
@@ -1992,6 +2048,11 @@
             btns.forEach(b => b.disabled = false);
             if (document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
             alert('伝票を削除し、在庫数量を元に戻しました。');
+
+            // ★保存後は古いキャッシュを表示させないため削除
+            const dateToClear = document.getElementById('datePicker').value;
+            localStorage.removeItem('pickingPig_localCache_' + dateToClear);
+
             scannedActionItems = [];
             currentVoucherId = generateVoucherId();
             fetchDataForSelectedDate();
@@ -2007,7 +2068,6 @@
         window.print();
       }
 
-      // ★修正点3: setTimeoutを使わず確実に印刷ダイアログを出し、その後クラスを外す
       function executeVoucherPrint() {
         document.body.classList.add('printing-voucher');
         window.print();
@@ -2740,6 +2800,10 @@
         savedSurgeryVal = sSelect ? sSelect.value : '';
         isRestoringState = true;
         
+        // ★保存後は古いキャッシュを表示させないため対象日のキャッシュを削除
+        const dateToClear = document.getElementById('datePicker').value;
+        localStorage.removeItem('pickingPig_localCache_' + dateToClear);
+
         alert(msg);
         fetchDataForSelectedDate();
       }
