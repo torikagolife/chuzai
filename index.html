@@ -1751,6 +1751,9 @@
                             jissu: jissu,
                             ope: ope,
                             chuzai: chuzai,
+                            cleanWait: cleanWait,
+                            moving: moving,
+                            repairing: repairing,
                             shortage: currentTotal - req // マイナスになるように
                         });
                     }
@@ -1771,7 +1774,10 @@
                           📦 <strong>${s.jissu}</strong> &nbsp;
                           🔩 <strong>${s.ope}</strong> &nbsp;
                           🀄️ <strong>${s.chuzai}</strong> &nbsp;
-                          <span style="color:#d9534f; font-weight:bold; background:#fdeea1; padding:2px 6px; border-radius:4px;">🖩 ${s.shortage}</span>
+                          <span style="color:#d9534f; font-weight:bold; background:#fdeea1; padding:2px 6px; border-radius:4px;">🖩 ${s.shortage}</span> &nbsp;
+                          ✨ <strong>${s.cleanWait}</strong> &nbsp;
+                          🚚 <strong>${s.moving}</strong> &nbsp;
+                          🔧 <strong>${s.repairing}</strong>
                       </div>
                     </div>`;
                 });
