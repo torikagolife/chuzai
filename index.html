@@ -1516,13 +1516,13 @@
             <div style="margin-bottom:15px; padding:12px; background:#e6f9ea; border-radius:8px; border:1px solid #b2e6c1;">
               <label style="font-weight:bold; color:#155724; display:block; margin-bottom:8px;">📅 手術室への払出・確認</label>
               <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <button onclick="openSurgerySelectModal('today_to_ope', currentAppData)" style="padding:12px; background-color:#28a745; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">今日の手術から<br>手術室へ</button>
-                <button onclick="handleTomorrowToOpe()" style="padding:12px; background-color:#20c997; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">明日の手術から<br>手術室へ</button>
+                <button onclick="openSurgerySelectModal('today_to_ope', currentAppData)" style="padding:12px; background-color:#28a745; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">今日の手術から払出し</button>
+                <button onclick="handleTomorrowToOpe()" style="padding:12px; background-color:#20c997; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">明日の手術から払出し</button>
               </div>
               <label style="font-weight:bold; color:#856404; display:block; margin-bottom:8px; margin-top:15px;">⚠️ 不足アイテム抽出</label>
               <div style="display:flex; gap:10px;">
-                <button onclick="handleExtractTodayShortages()" style="padding:12px; background-color:#ffc107; color:#333; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">今日の不足<br>アイテム抽出</button>
-                <button onclick="handleExtractTomorrowShortages()" style="padding:12px; background-color:#ffda6a; color:#333; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">明日の不足<br>アイテム抽出</button>
+                <button onclick="handleExtractTodayShortages()" style="padding:12px; background-color:#ffc107; color:#333; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">今日の不足アイテム</button>
+                <button onclick="handleExtractTomorrowShortages()" style="padding:12px; background-color:#ffda6a; color:#333; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">明日の不足アイテム</button>
               </div>
             </div>`;
         }
