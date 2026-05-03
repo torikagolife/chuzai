@@ -1103,7 +1103,7 @@
 
     <div id="shortageModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1200; justify-content:center; align-items:center;">
       <div style="background:#fff; width:90%; max-width:500px; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.2); display:flex; flex-direction:column; max-height:80vh;">
-        <h3 style="margin-top:0; margin-bottom:15px; color:#333; text-align:center; border-bottom:2px solid #ffc107; padding-bottom:10px;">⚠️ 明日の不足アイテム抽出結果</h3>
+        <h3 id="shortageModalTitle" style="margin-top:0; margin-bottom:15px; color:#333; text-align:center; border-bottom:2px solid #ffc107; padding-bottom:10px;">⚠️ 明日の不足アイテム抽出結果</h3>
         <div id="shortageList" style="flex:1; overflow-y:auto; padding-right:10px; display:flex; flex-direction:column; gap:10px;">
         </div>
         <div style="margin-top:20px;">
@@ -1519,7 +1519,11 @@
                 <button onclick="openSurgerySelectModal('today_to_ope', currentAppData)" style="padding:12px; background-color:#28a745; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">今日の手術から<br>手術室へ</button>
                 <button onclick="handleTomorrowToOpe()" style="padding:12px; background-color:#20c997; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">明日の手術から<br>手術室へ</button>
               </div>
-              <button onclick="handleExtractTomorrowShortages()" style="width:100%; padding:12px; background-color:#ffc107; color:#333; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em;">⚠️ 明日の不足アイテム抽出</button>
+              <label style="font-weight:bold; color:#856404; display:block; margin-bottom:8px; margin-top:15px;">⚠️ 不足アイテム抽出</label>
+              <div style="display:flex; gap:10px;">
+                <button onclick="handleExtractTodayShortages()" style="padding:12px; background-color:#ffc107; color:#333; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">今日の不足<br>アイテム抽出</button>
+                <button onclick="handleExtractTomorrowShortages()" style="padding:12px; background-color:#ffda6a; color:#333; border:none; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-size:1.1em; flex:1;">明日の不足<br>アイテム抽出</button>
+              </div>
             </div>`;
         }
 
@@ -1713,6 +1717,82 @@
         }
       }
 
+      async function handleExtractTodayShortages() {
+        const data = currentAppData;
+        if(data) {
+            const reqCounts = {};
+            data.surgeries.forEach(s => {
+                if(s.items) {
+                    s.items.forEach(i => {
+                        const r = parseInt(i.required, 10) || 0;
+                        if(r > 0) {
+                            reqCounts[i.code] = (reqCounts[i.code] || 0) + r;
+                        }
+                    });
+                }
+            });
+
+            const masterItems = currentAppData.masterItems;
+            const shortages = [];
+
+            Object.keys(reqCounts).forEach(code => {
+                const req = reqCounts[code];
+                const mItem = masterItems.find(m => m.code === code);
+                if(mItem) {
+                    const ope = parseInt(mItem.opeCount, 10) || 0;
+                    const chuzai = parseInt(mItem.chuzaiCount, 10) || 0;
+                    const cleanWait = parseInt(mItem.cleanWait, 10) || 0;
+                    const moving = parseInt(mItem.moving, 10) || 0;
+                    const repairing = parseInt(mItem.repairing, 10) || 0;
+                    
+                    const jissu = ope + chuzai + cleanWait + moving + repairing;
+                    const currentTotal = ope + chuzai; // 手術室数＋中材数
+
+                    if(req > currentTotal) {
+                        shortages.push({
+                            name: mItem.name,
+                            req: req,
+                            jissu: jissu,
+                            ope: ope,
+                            chuzai: chuzai,
+                            cleanWait: cleanWait,
+                            moving: moving,
+                            repairing: repairing,
+                            shortage: currentTotal - req // マイナスになるように
+                        });
+                    }
+                }
+            });
+
+            const listContainer = document.getElementById('shortageList');
+            if(shortages.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center; color:#28a745; font-weight:bold; padding:20px;">今日の不足アイテムはありません！🎉</p>';
+            } else {
+                let html = '';
+                shortages.forEach(s => {
+                    html += `
+                    <div style="background:#fff3cd; border:1px solid #ffeeba; border-radius:8px; padding:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                      <div style="font-weight:bold; font-size:1.15em; color:#333; margin-bottom:8px;">${s.name}</div>
+                      <div style="font-size:1em; color:#555; line-height:1.6;">
+                          必要数: <strong>${s.req}</strong> &nbsp;
+                          📦 <strong>${s.jissu}</strong> &nbsp;
+                          🔩 <strong>${s.ope}</strong> &nbsp;
+                          🀄️ <strong>${s.chuzai}</strong> &nbsp;
+                          <span style="color:#d9534f; font-weight:bold; background:#fdeea1; padding:2px 6px; border-radius:4px;">🖩 ${s.shortage}</span> &nbsp;
+                          ✨ <strong>${s.cleanWait}</strong> &nbsp;
+                          🚚 <strong>${s.moving}</strong> &nbsp;
+                          🔧 <strong>${s.repairing}</strong>
+                      </div>
+                    </div>`;
+                });
+                listContainer.innerHTML = html;
+            }
+            
+            document.getElementById('shortageModalTitle').innerHTML = '⚠️ 今日の不足アイテム抽出結果';
+            document.getElementById('shortageModal').style.display = 'flex';
+        }
+      }
+
       async function handleExtractTomorrowShortages() {
         const data = await getTomorrowData();
         if(data) {
@@ -1784,6 +1864,7 @@
                 listContainer.innerHTML = html;
             }
             
+            document.getElementById('shortageModalTitle').innerHTML = '⚠️ 明日の不足アイテム抽出結果';
             document.getElementById('shortageModal').style.display = 'flex';
         }
       }
