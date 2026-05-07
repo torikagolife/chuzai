@@ -2401,7 +2401,7 @@
                        <div id="masterQrCode" class="qr-code-box"></div>
                        <div>
                          <div style="font-size:0.85em; color:#666; margin-bottom:5px;">対象コード: <strong>${s.code}</strong></div>
-                         <button class="qr-download-btn" onclick="downloadQr('masterQrCode', '${s.code}_${s.name.replace(/'/g, "\\'")}')">⬇️ QRダウンロード</button>
+                         <button class="qr-download-btn" data-filename="${s.code}_${s.name.replace(/"/g, '&quot;')}" onclick="downloadQr('masterQrCode', this.dataset.filename)">⬇️ QRダウンロード</button>
                        </div>
                      </div>`;
           }
@@ -2480,7 +2480,7 @@
                        <div id="itemQrCode" class="qr-code-box"></div>
                        <div>
                          <div style="font-size:0.85em; color:#666; margin-bottom:5px;">対象コード: <strong>${item.code}</strong></div>
-                         <button class="qr-download-btn" onclick="downloadQr('itemQrCode', '${item.code}_${item.name.replace(/'/g, "\\'")}')">⬇️ QRダウンロード</button>
+                         <button class="qr-download-btn" data-filename="${item.code}_${item.name.replace(/"/g, '&quot;')}" onclick="downloadQr('itemQrCode', this.dataset.filename)">⬇️ QRダウンロード</button>
                        </div>
                      </div>`;
         }
@@ -3122,7 +3122,7 @@
         }
         
         // ファイル名として使用できない記号をサニタイズ
-        const safeFilename = filenamePrefix.replace(/[\\/:*?"<>|]/g, '_');
+        const safeFilename = filenamePrefix.replace(/[\\/:*?"<>|\s　]/g, '_');
         
         const link = document.createElement('a');
         link.href = dataUrl;
