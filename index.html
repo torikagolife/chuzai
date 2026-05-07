@@ -2401,7 +2401,7 @@
                        <div id="masterQrCode" class="qr-code-box"></div>
                        <div>
                          <div style="font-size:0.85em; color:#666; margin-bottom:5px;">対象コード: <strong>${s.code}</strong></div>
-                         <button class="qr-download-btn" onclick="downloadQr('masterQrCode', '${s.code}')">⬇️ QRダウンロード</button>
+                         <button class="qr-download-btn" onclick="downloadQr('masterQrCode', '${s.code}_${s.name.replace(/'/g, "\\'")}')">⬇️ QRダウンロード</button>
                        </div>
                      </div>`;
           }
@@ -2480,7 +2480,7 @@
                        <div id="itemQrCode" class="qr-code-box"></div>
                        <div>
                          <div style="font-size:0.85em; color:#666; margin-bottom:5px;">対象コード: <strong>${item.code}</strong></div>
-                         <button class="qr-download-btn" onclick="downloadQr('itemQrCode', '${item.code}')">⬇️ QRダウンロード</button>
+                         <button class="qr-download-btn" onclick="downloadQr('itemQrCode', '${item.code}_${item.name.replace(/'/g, "\\'")}')">⬇️ QRダウンロード</button>
                        </div>
                      </div>`;
         }
@@ -3121,9 +3121,12 @@
           return;
         }
         
+        // ファイル名として使用できない記号をサニタイズ
+        const safeFilename = filenamePrefix.replace(/[\\/:*?"<>|]/g, '_');
+        
         const link = document.createElement('a');
         link.href = dataUrl;
-        link.download = filenamePrefix + '_QR.png';
+        link.download = safeFilename + '.png';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
