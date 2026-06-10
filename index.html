@@ -1953,6 +1953,11 @@
           }
           if (confirm('伝票 ' + decodedText + ' のアイテムを一括受取して、次に移動させますか？\n（ｽﾃｰﾀｽ変化は伝票ごとに違います）')) {
             if (document.getElementById('loading')) document.getElementById('loading').style.display = 'block'; 
+            
+            // ★追加：受取保存の直前にも「勘違いフラグ」を強制解除
+            const mainSaveBtn = document.getElementById('saveBtn');
+            if (mainSaveBtn) mainSaveBtn.classList.remove('needs-saving');
+
             callGasApi('receiveVoucherData', {
               voucherId: decodedText,
               staff: staffName
@@ -2039,6 +2044,10 @@
           return;
         }
 
+        // ★追加：保存の直前に「勘違いフラグ」を強制解除（これで画面がストップしなくなります）
+        const mainSaveBtn = document.getElementById('saveBtn');
+        if (mainSaveBtn) mainSaveBtn.classList.remove('needs-saving');
+
         const actionType = document.getElementById('actionTypeSelect').value;
         const facility = currentTab === 'opeAction' ? '手術室' : '中材';
         const date = document.getElementById('datePicker').value;
@@ -2115,6 +2124,10 @@
 
       function deleteActionVoucher() {
         if (!confirm('本当にこの伝票を削除しますか？\n（削除するとアイテムの数量は元の状態に戻ります）')) return;
+
+        // ★追加：削除の直前にも「勘違いフラグ」を強制解除
+        const mainSaveBtn = document.getElementById('saveBtn');
+        if (mainSaveBtn) mainSaveBtn.classList.remove('needs-saving');
 
         const payload = {
           voucherId: currentVoucherId,
